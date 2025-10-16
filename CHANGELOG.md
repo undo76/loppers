@@ -1,6 +1,42 @@
 # CHANGELOG
 
+## v1.3.0 (2025-10-16)
+
+### Feature
+
+* feat: Add support for 5 new programming languages
+
+**New Languages:**
+- Swift: Functions and methods with function_body extraction
+- Lua: Functions with block extraction (end-based syntax)
+- Scala: Functions and methods with block extraction
+- Groovy: Methods with smart query-based filtering (excludes class bodies)
+- Objective-C: Methods with compound_statement extraction
+
+**Implementation:**
+- Added language configs to LANGUAGE_CONFIGS in loppers.py (lines 115-144)
+- Improved line removal logic to handle single-line and multi-line bodies correctly
+- Added special handling for Lua&#39;s end-based syntax (not brace-based)
+- Used pure query-based approach for all languages (no custom code needed)
+
+**Testing:**
+- Added 5 comprehensive test cases covering each language
+- All 29 tests pass (24 existing + 5 new)
+
+**Documentation:**
+- Updated README.md: 12 → 17 supported languages
+- Added language feature matrix for new languages
+- Updated features list
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`65749ab`](https://github.com/undo76/loppers/commit/65749ab73c3991339267c668bf2b50f71f060653))
+
 ## v1.2.1 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.2.1 ([`3279e26`](https://github.com/undo76/loppers/commit/3279e2690f9fc099ed01838bbe2386820a926740))
 
 ### Fix
 
