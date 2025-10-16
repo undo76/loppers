@@ -2,6 +2,44 @@
 
 <!-- version list -->
 
+## v1.1.0 (2025-10-16)
+
+### Chores
+
+- Update lock file
+  ([`8449915`](https://github.com/undo76/loppers/commit/84499151633e5d951857f213422ab7dda1da1a7a))
+
+- Update lock file
+  ([`b0ca406`](https://github.com/undo76/loppers/commit/b0ca4061a89baf2fed745b3780c8f3e11df53515))
+
+### Documentation
+
+- Consolidate and improve README
+  ([`f4693e1`](https://github.com/undo76/loppers/commit/f4693e19bfdedea37540610f142ea74745eff860))
+
+- Consolidate markdown files into README
+  ([`c6eec28`](https://github.com/undo76/loppers/commit/c6eec28152542091c7b6bb6d14ff139b13051fdd))
+
+### Features
+
+- Add directory and recursive traversal support to CLI
+  ([`3ec1d91`](https://github.com/undo76/loppers/commit/3ec1d91bae136c9bdc38f2bc9e61236922b0e478))
+
+- Add Kotlin language support
+  ([`980ef26`](https://github.com/undo76/loppers/commit/980ef2632d9356cdf8cfd47f68b483de374b10f8))
+
+### Refactoring
+
+- Move file concatenation to library with binary file detection
+  ([`853b1b8`](https://github.com/undo76/loppers/commit/853b1b880e85af89b45caebcb4309b1f28a1824b))
+
+- Use binaryornot library for simpler binary file detection
+  ([`efff379`](https://github.com/undo76/loppers/commit/efff379acc275bebfc521870a778ea744b3a3971))
+
+- Use filetype library for robust binary file detection
+  ([`49e0d5c`](https://github.com/undo76/loppers/commit/49e0d5ca94e859b72a01c6bb224190e5753e8de9))
+
+
 ## v1.0.2 (2025-10-16)
 
 ### Bug Fixes
