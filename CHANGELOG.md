@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.0.2 (2025-10-16)
+
+### Bug Fixes
+
+- Explicitly enable release steps in semantic-release workflow
+  ([`bd6857b`](https://github.com/undo76/loppers/commit/bd6857b29e2a3fc40c06324e7b5c70fdb6964de4))
+
+### Chores
+
+- **release**: Update version to 1.0.1 in pyproject.toml
+  ([`b752a3f`](https://github.com/undo76/loppers/commit/b752a3fdb63ec21243d97cf508312a1f716a9979))
+
+
 ## v1.0.1 (2025-10-16)
 
 ### Bug Fixes
