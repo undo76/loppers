@@ -40,7 +40,8 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
             "[(function_declaration body: (statement_block) @body) "
             "(arrow_function body: (statement_block) @body) "
             "(function_expression body: (statement_block) @body) "
-            "(method_definition body: (statement_block) @body)]"
+            "(method_definition body: (statement_block) @body) "
+            "(arrow_function (parenthesized_expression) @body)]"
         ),
     ),
     "typescript": LanguageConfig(
@@ -49,7 +50,8 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
             "[(function_declaration body: (statement_block) @body) "
             "(arrow_function body: (statement_block) @body) "
             "(function_expression body: (statement_block) @body) "
-            "(method_definition body: (statement_block) @body)]"
+            "(method_definition body: (statement_block) @body) "
+            "(arrow_function (parenthesized_expression) @body)]"
         ),
     ),
     "java": LanguageConfig(
@@ -204,6 +206,27 @@ class SkeletonExtractor:
             for node in node_list:
                 start_line: int = node.start_point[0]
                 end_line: int = node.end_point[0]
+
+                # For parenthesized_expression in JS/TS, keep parens but remove content
+                if node.type == "parenthesized_expression" and self.language in ("javascript", "typescript"):
+                    # Find the opening and closing paren positions
+                    if start_line == end_line:
+                        # Single line: (, content, ) - remove content between parens
+                        # Find positions of ( and )
+                        line_text = lines[start_line] if start_line < len(lines) else ""
+                        open_paren = line_text.find("(")
+                        close_paren = line_text.rfind(")")
+                        if open_paren >= 0 and close_paren > open_paren:
+                            # Replace content with space
+                            lines[start_line] = line_text[:open_paren+1] + " " + line_text[close_paren:]
+                    else:
+                        # Multi-line: skip inner lines, keep opening ( and closing )
+                        # Remove lines between start and end, but keep the parens
+                        skip_start = start_line + 1
+                        end_inclusive = end_line
+                        for line_num in range(skip_start, end_inclusive):
+                            lines_to_remove.add(line_num)
+                    continue
 
                 # For Python, preserve docstrings (first string in body)
                 skip_start: int = start_line
