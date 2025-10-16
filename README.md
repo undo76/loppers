@@ -62,6 +62,31 @@ def calculate(x: int, y: int) -> int:
     """Calculate sum."""
 ```
 
+### Concatenate Files
+
+The library includes utilities for concatenating files with optional skeleton extraction:
+
+```python
+from loppers import concatenate_files
+
+# Concatenate all text files in directories, extracting skeletons
+result = concatenate_files(
+    ["src/", "tests/"],          # Mix of files and directories
+    recursive=True,              # Recursively traverse
+    extract_skeletons=True,      # Extract code skeletons
+    verbose=True,                # Print progress
+)
+print(result)
+```
+
+**Features**:
+- Automatically detects and skips binary files
+- Extracts code skeletons for supported languages
+- Includes original content for unsupported file types
+- Files separated by `---` headers
+
+**Binary File Detection**: Files are considered binary if they have a known binary extension (`.pdf`, `.jpg`, `.exe`, etc.), contain null bytes, or fail UTF-8 decoding.
+
 ## Supported Languages
 
 - Python (with docstring preservation)
@@ -199,6 +224,50 @@ Create extractor for a specific language.
 
 **Raises:**
 - `ValueError`: If language not supported
+
+### `concatenate_files(file_paths, recursive=False, verbose=False, extract_skeletons=True) -> str`
+
+Concatenate files with optional skeleton extraction.
+
+**Args:**
+- `file_paths`: List of file and/or directory paths
+- `recursive`: Recursively traverse directories (default: False)
+- `verbose`: Print debug information (default: False)
+- `extract_skeletons`: Enable skeleton extraction (default: True)
+
+**Returns:** Concatenated content with file headers
+
+**Features:**
+- Automatically detects and skips binary files
+- Extracts skeletons for supported languages
+- Includes full content for unsupported text files
+
+### `collect_files(paths, recursive=False, verbose=False, include_all_text_files=True) -> list[Path]`
+
+Collect files from paths, excluding binary files.
+
+**Args:**
+- `paths`: List of file and/or directory paths
+- `recursive`: Recursively traverse directories
+- `verbose`: Print debug information
+- `include_all_text_files`: Include all text files or only recognized languages
+
+**Returns:** Sorted list of file paths
+
+### `is_binary_file(file_path, chunk_size=8192) -> bool`
+
+Detect if a file is binary.
+
+**Args:**
+- `file_path`: Path to file
+- `chunk_size`: Bytes to read for detection (default: 8KB)
+
+**Returns:** True if binary, False if text
+
+**Detection Method:**
+- Checks known binary extensions (.pdf, .jpg, .exe, etc.)
+- Scans for null bytes in file
+- Attempts UTF-8 decoding
 
 ## Adding Languages
 

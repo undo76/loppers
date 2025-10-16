@@ -6,132 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from loppers.loppers import extract
-from loppers.mapping import EXTENSION_TO_LANGUAGE, get_language
-
-
-def collect_files(
-    paths: list[str | Path],
-    recursive: bool = False,
-    verbose: bool = False,
-) -> list[Path]:
-    """Collect files from paths, expanding directories if requested.
-
-    Args:
-        paths: List of file paths or directory paths
-        recursive: If True, recursively traverse directories
-        verbose: Print debug information to stderr
-
-    Returns:
-        Sorted list of file paths to process
-    """
-    collected: set[Path] = set()
-
-    for path_item in paths:
-        path = Path(path_item)
-
-        if path.is_file():
-            collected.add(path)
-        elif path.is_dir():
-            if recursive:
-                # Recursively find all supported files in the directory
-                for ext in EXTENSION_TO_LANGUAGE:
-                    for file_path in path.rglob(f"*{ext}"):
-                        if file_path.is_file():
-                            collected.add(file_path)
-            else:
-                # Only find files in the directory (non-recursive)
-                for file_path in path.iterdir():
-                    if file_path.is_file():
-                        ext = file_path.suffix.lower()
-                        if ext in EXTENSION_TO_LANGUAGE:
-                            collected.add(file_path)
-                        elif verbose:
-                            print(
-                                f"⊘ Skipping unsupported file: {file_path.name}",
-                                file=sys.stderr,
-                            )
-        else:
-            if verbose:
-                print(f"Warning: Path not found: {path}", file=sys.stderr)
-
-    # Return sorted list for consistent output
-    return sorted(collected)
-
-
-def concatenate_files(
-    file_paths: list[str | Path],
-    recursive: bool = False,
-    verbose: bool = False,
-) -> str:
-    """Concatenate files with skeleton extraction and file headers.
-
-    Accepts files and/or directories. Attempts to extract skeleton from each
-    file using its language. If extraction fails, includes the original file
-    content. Files are separated with headers indicating their names.
-
-    Args:
-        file_paths: List of file and/or directory paths
-        recursive: If True, recursively traverse directories for supported files
-        verbose: Print debug information to stderr
-
-    Returns:
-        Concatenated content with file headers and skeletons
-    """
-    # Collect all files to process
-    files_to_process = collect_files(file_paths, recursive=recursive, verbose=verbose)
-
-    if not files_to_process:
-        if verbose:
-            print("Warning: No files to process", file=sys.stderr)
-        return ""
-
-    results: list[str] = []
-
-    for file_path in files_to_process:
-        path = Path(file_path)
-
-        # Check if file exists
-        if not path.exists():
-            if verbose:
-                print(f"Warning: File not found: {path}", file=sys.stderr)
-            continue
-
-        # Read file content
-        try:
-            content = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, IOError) as e:
-            if verbose:
-                print(f"Warning: Could not read {path}: {e}", file=sys.stderr)
-            continue
-
-        # Create header
-        header = f"--- {path}\n"
-
-        # Attempt skeleton extraction
-        language = get_language(str(path.suffix))
-
-        if language:
-            try:
-                skeleton = extract(content, language)
-                body = skeleton
-                if verbose:
-                    print(f"✓ Extracted skeleton from {path.name}", file=sys.stderr)
-            except Exception as e:
-                if verbose:
-                    print(
-                        f"⚠ Could not extract skeleton from {path.name}: {e}",
-                        file=sys.stderr,
-                    )
-                body = content
-        else:
-            if verbose:
-                print(f"⚠ Unknown language for {path.name}, keeping as-is", file=sys.stderr)
-            body = content
-
-        results.append(header + body + "\n")
-
-    return "\n".join(results).rstrip()
+from loppers.concatenator import concatenate_files
 
 
 def main() -> None:
@@ -182,6 +57,12 @@ Examples:
         help="Print verbose output to stderr",
     )
 
+    parser.add_argument(
+        "--no-extract",
+        action="store_true",
+        help="Include original files without skeleton extraction",
+    )
+
     args = parser.parse_args()
 
     # Concatenate files
@@ -189,6 +70,7 @@ Examples:
         args.files,
         recursive=args.recursive,
         verbose=args.verbose,
+        extract_skeletons=not args.no_extract,
     )
 
     # Output result

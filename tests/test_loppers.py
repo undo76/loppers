@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
-from loppers import extract, SkeletonExtractor
+from loppers import extract, SkeletonExtractor, is_binary_file, concatenate_files
 
 
 class TestSkeletonExtractor(unittest.TestCase):
@@ -282,6 +284,170 @@ class User {
         self.assertIn("var age: Int", skeleton)
         self.assertNotIn('return "Hello, $name"', skeleton)
         self.assertNotIn("throw IllegalArgumentException", skeleton)
+
+
+class TestBinaryFileDetection(unittest.TestCase):
+    """Test binary file detection."""
+
+    def test_text_file_not_binary(self) -> None:
+        """Test that text files are not detected as binary."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("Hello, this is a text file\n")
+            f.flush()
+            path = Path(f.name)
+            try:
+                self.assertFalse(is_binary_file(path))
+            finally:
+                path.unlink()
+
+    def test_binary_extension_detected(self) -> None:
+        """Test that files with binary extensions are detected."""
+        # Create a fake PDF file (binary extension)
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            f.write(b"Not a real PDF")
+            f.flush()
+            path = Path(f.name)
+            try:
+                self.assertTrue(is_binary_file(path))
+            finally:
+                path.unlink()
+
+    def test_null_byte_detection(self) -> None:
+        """Test that files with null bytes are detected as binary."""
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".bin", delete=False) as f:
+            f.write(b"Some text\x00with null bytes")
+            f.flush()
+            path = Path(f.name)
+            try:
+                self.assertTrue(is_binary_file(path))
+            finally:
+                path.unlink()
+
+    def test_python_file_not_binary(self) -> None:
+        """Test that Python files are not detected as binary."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write("def hello():\n    print('hello')\n")
+            f.flush()
+            path = Path(f.name)
+            try:
+                self.assertFalse(is_binary_file(path))
+            finally:
+                path.unlink()
+
+    def test_empty_file_not_binary(self) -> None:
+        """Test that empty files are not detected as binary."""
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.flush()
+            path = Path(f.name)
+            try:
+                self.assertFalse(is_binary_file(path))
+            finally:
+                path.unlink()
+
+    def test_image_extension_detected(self) -> None:
+        """Test that image files are detected as binary."""
+        for ext in [".jpg", ".png", ".gif"]:
+            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:
+                f.write(b"Fake image data")
+                f.flush()
+                path = Path(f.name)
+                try:
+                    self.assertTrue(is_binary_file(path), f"{ext} should be detected as binary")
+                finally:
+                    path.unlink()
+
+
+class TestConcatenation(unittest.TestCase):
+    """Test file concatenation functionality."""
+
+    def test_concatenate_single_file(self) -> None:
+        """Test concatenating a single file."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("Hello, World!")
+            f.flush()
+            path = f.name
+
+            try:
+                result = concatenate_files([path], extract_skeletons=False)
+                self.assertIn(path, result)
+                self.assertIn("Hello, World!", result)
+            finally:
+                Path(path).unlink()
+
+    def test_concatenate_multiple_files(self) -> None:
+        """Test concatenating multiple files."""
+        files = []
+        try:
+            # Create test files
+            for i, content in enumerate(["File 1 content", "File 2 content"]):
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".txt", delete=False
+                ) as f:
+                    f.write(content)
+                    f.flush()
+                    files.append(f.name)
+
+            result = concatenate_files(files, extract_skeletons=False)
+
+            # Both files should be in result
+            self.assertIn("File 1 content", result)
+            self.assertIn("File 2 content", result)
+            # Should have headers for both
+            self.assertEqual(result.count("---"), 2)
+        finally:
+            for f in files:
+                Path(f).unlink()
+
+    def test_concatenate_skips_binary_files(self) -> None:
+        """Test that binary files are skipped during concatenation."""
+        files = []
+        try:
+            # Create a text file
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+                f.write("Text content")
+                f.flush()
+                files.append(f.name)
+
+            # Create a binary file
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                f.write(b"Binary content")
+                f.flush()
+                files.append(f.name)
+
+            result = concatenate_files(files, extract_skeletons=False)
+
+            # Text file should be included
+            self.assertIn("Text content", result)
+            # Binary file should not be included
+            self.assertNotIn("Binary content", result)
+        finally:
+            for f in files:
+                Path(f).unlink()
+
+    def test_concatenate_with_skeleton_extraction(self) -> None:
+        """Test concatenation with skeleton extraction enabled."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """def hello(name):
+    \"\"\"Greet someone.\"\"\"
+    print(f"Hello {name}")
+    return True
+"""
+            )
+            f.flush()
+            path = f.name
+
+            try:
+                result = concatenate_files([path], extract_skeletons=True)
+
+                # Function signature should be present
+                self.assertIn("def hello", result)
+                # Docstring should be present
+                self.assertIn("Greet someone", result)
+                # Body should be removed
+                self.assertNotIn('print(f"Hello {name}")', result)
+            finally:
+                Path(path).unlink()
 
 
 if __name__ == "__main__":
