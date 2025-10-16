@@ -1,6 +1,36 @@
 # CHANGELOG
 
+## v1.5.0 (2025-10-16)
+
+### Feature
+
+* feat: Remove all arrow function expression bodies in JavaScript/TypeScript
+
+- Add support for removing simple arrow function expressions (identifiers, calls, etc.)
+- Handles all expression types: binary, unary, ternary, array, object, etc.
+- Removes entire expression lines to clean up nested arrow functions
+- Preserves parenthesized expressions structure: () =&gt; ()
+
+Example:
+Before: const fn = (x) =&gt; x * 2;
+After:  (entire line removed)
+
+Before: const fn = (x) =&gt; obj.method();
+After:  (entire line removed)
+
+Nested arrows in callbacks are now properly cleaned:
+Before: props.map((x) =&gt; &lt;Component&gt;{x}&lt;/Component&gt;)
+After:  props.map() (entire callback body removed)
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`ab0ff16`](https://github.com/undo76/loppers/commit/ab0ff161197823ed63cf001d718a7c733db95662))
+
 ## v1.4.1 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.4.1 ([`a3d4203`](https://github.com/undo76/loppers/commit/a3d4203a8579106dbe94047211bae7f907ca4f01))
 
 ### Fix
 
