@@ -28,10 +28,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      - name: Install build tool
-        run: pip install build
-
       - name: Python Semantic Release
         uses: python-semantic-release/python-semantic-release@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          build: false
