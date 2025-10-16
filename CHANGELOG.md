@@ -1,6 +1,23 @@
 # CHANGELOG
 
+## v1.1.2 (2025-10-16)
+
+### Fix
+
+* fix: Add git user configuration to semantic-release workflow
+
+- Configure git user name and email for commit operations
+- This allows semantic-release to commit version updates to pyproject.toml
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`8ec0384`](https://github.com/undo76/loppers/commit/8ec0384779dd572be28ad35143c8fda39dba75a7))
+
 ## v1.1.1 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.1.1 ([`1e806e5`](https://github.com/undo76/loppers/commit/1e806e5f11ba8e39b59ca8f995a4a8da712d3f7c))
 
 ### Fix
 
