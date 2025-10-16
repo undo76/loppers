@@ -59,6 +59,10 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.hatch.version]
+path = "pyproject.toml"
+pattern = 'version = "(?P<version>[^"]+)"'
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/loppers"]
 
