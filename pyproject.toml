@@ -2,9 +2,12 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# Dynamic version updated by semantic-release
+version = "1.0.1"
+
 [project]
 name = "loppers"
-version = "1.0.1"
+dynamic = ["version"]
 description = "Extract source file skeletons using tree-sitter queries"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -106,7 +109,9 @@ known-first-party = ["loppers"]
 # Python Semantic Release configuration
 [tool.semantic_release]
 version_pattern = "v{version}"
-version_variable = "pyproject.toml:version"
+version_variables = [
+    "pyproject.toml:version"
+]
 upload_to_pypi = false
 build_command = ""
 branch = "main"
