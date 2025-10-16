@@ -28,6 +28,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
+      - name: Configure git user
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
       - name: Python Semantic Release
         uses: python-semantic-release/python-semantic-release@v9.8.3
         env:
@@ -35,3 +40,4 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          build: false
