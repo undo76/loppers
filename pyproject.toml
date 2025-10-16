@@ -44,7 +44,7 @@ Repository = "https://github.com/undo76/loppers"
 Issues = "https://github.com/undo76/loppers/issues"
 
 [tool.uv]
-dev-dependencies = ["pytest>=7.0.0", "pytest-cov>=4.0.0", "ruff>=0.1.0", "python-semantic-release>=8.0.0"]
+dev-dependencies = ["pytest>=7.0.0", "pytest-cov>=4.0.0", "ruff>=0.1.0", "python-semantic-release>=8.0.0", "build>=1.0.0"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -104,6 +104,6 @@ known-first-party = ["loppers"]
 version_pattern = "v{version}"
 version_variable = "pyproject.toml:version"
 upload_to_pypi = false
-build_command = "python -m pip install build && python -m build"
+build_command = "uv run python -m build"
 branch = "main"
 commit_message = "chore(release): {version}"
