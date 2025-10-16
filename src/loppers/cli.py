@@ -12,7 +12,6 @@ from loppers.mapping import get_language
 
 def concatenate_files(
     file_paths: list[str | Path],
-    separator: str = "=" * 80,
     verbose: bool = False,
 ) -> str:
     """Concatenate files with skeleton extraction and file headers.
@@ -23,7 +22,6 @@ def concatenate_files(
 
     Args:
         file_paths: List of file paths to concatenate
-        separator: String to separate files (default: 80 equal signs)
         verbose: Print debug information to stderr
 
     Returns:
@@ -49,7 +47,7 @@ def concatenate_files(
             continue
 
         # Create header
-        header = f"{separator}\n# File: {path.name}\n{separator}\n"
+        header = f"--- {path}\n"
 
         # Attempt skeleton extraction
         language = get_language(str(path.suffix))
@@ -82,8 +80,8 @@ def main() -> None:
 
     Usage:
         loppers file1.py file2.js file3.java
-        loppers --separator "---" *.py
         loppers --output combined.txt *.py
+        loppers --verbose *.py
     """
     parser = argparse.ArgumentParser(
         description="Concatenate files with skeleton extraction",
@@ -91,8 +89,9 @@ def main() -> None:
         epilog="""
 Examples:
   loppers file1.py file2.js
-  loppers --output skeletons.txt *.py
-  loppers --verbose *.java
+  loppers -o skeletons.txt *.py
+  loppers -v *.java
+  loppers -o combined.py src/**/*.py
         """,
     )
 
@@ -111,14 +110,6 @@ Examples:
     )
 
     parser.add_argument(
-        "-s",
-        "--separator",
-        type=str,
-        default="=" * 80,
-        help="Separator between files (default: 80 equal signs)",
-    )
-
-    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -128,7 +119,7 @@ Examples:
     args = parser.parse_args()
 
     # Concatenate files
-    result = concatenate_files(args.files, separator=args.separator, verbose=args.verbose)
+    result = concatenate_files(args.files, verbose=args.verbose)
 
     # Output result
     if args.output:
