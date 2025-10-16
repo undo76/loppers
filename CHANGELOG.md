@@ -2,6 +2,39 @@
 
 <!-- version list -->
 
+## v1.0.1 (2025-10-16)
+
+### Bug Fixes
+
+- Disable build in semantic-release action
+  ([`4e7bdcb`](https://github.com/undo76/loppers/commit/4e7bdcba2a7e9159feb6953385a607c992cbed29))
+
+- Install build tool with pip before semantic-release runs
+  ([`6dbb52f`](https://github.com/undo76/loppers/commit/6dbb52fffbe27df5030c2b49e210ebda0ebf80c8))
+
+- Update semantic release configuration for uv package manager
+  ([`9c80239`](https://github.com/undo76/loppers/commit/9c802394f152056221038e33a0ca3580a4ee8461))
+
+- Use .venv/bin/python for build command in GitHub Actions
+  ([`1249711`](https://github.com/undo76/loppers/commit/12497119d121e2fcf3b96dcefb5dc33d4f1391fd))
+
+- Use python -m build directly in semantic-release build command
+  ([`a98dfa3`](https://github.com/undo76/loppers/commit/a98dfa308ddc82b222d54994bef403010cb1d5ba))
+
+### Chores
+
+- Update lock file and changelog from release
+  ([`b083952`](https://github.com/undo76/loppers/commit/b083952440a2924d69c965bbbed6dfd05c6bde46))
+
+- **release**: Update version to 1.0.0 and enable PyPI publishing
+  ([`56b1246`](https://github.com/undo76/loppers/commit/56b12463432a0ba044ad2096518ed76feb3c6054))
+
+### Documentation
+
+- Add release and publishing instructions
+  ([`5062fc1`](https://github.com/undo76/loppers/commit/5062fc152933ab6f6bdfcf9b16c2c92e9fab178f))
+
+
 ## v1.0.0 (2025-10-16)
 
 ### Bug Fixes
