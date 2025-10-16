@@ -301,10 +301,12 @@ class TestBinaryFileDetection(unittest.TestCase):
                 path.unlink()
 
     def test_binary_extension_detected(self) -> None:
-        """Test that files with binary extensions are detected."""
-        # Create a fake PDF file (binary extension)
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-            f.write(b"Not a real PDF")
+        """Test that files with actual binary content are detected."""
+        # Create a real PDF file with actual magic bytes
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False, mode="wb") as f:
+            # PDF magic bytes
+            f.write(b"%PDF-1.4\n")
+            f.write(b"%comment with some data\n")
             f.flush()
             path = Path(f.name)
             try:
@@ -314,7 +316,8 @@ class TestBinaryFileDetection(unittest.TestCase):
 
     def test_null_byte_detection(self) -> None:
         """Test that files with null bytes are detected as binary."""
-        with tempfile.NamedTemporaryFile(mode="wb", suffix=".bin", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
+            # Files with null bytes fail UTF-8 decoding
             f.write(b"Some text\x00with null bytes")
             f.flush()
             path = Path(f.name)
@@ -345,10 +348,17 @@ class TestBinaryFileDetection(unittest.TestCase):
                 path.unlink()
 
     def test_image_extension_detected(self) -> None:
-        """Test that image files are detected as binary."""
-        for ext in [".jpg", ".png", ".gif"]:
-            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:
-                f.write(b"Fake image data")
+        """Test that image files with actual magic bytes are detected as binary."""
+        # Use real magic bytes for actual file type detection
+        test_cases = [
+            (".jpg", b"\xFF\xD8\xFF\xE0"),  # JPEG magic bytes
+            (".png", b"\x89PNG\r\n\x1a\n"),  # PNG magic bytes
+            (".gif", b"GIF89a"),  # GIF magic bytes
+        ]
+        for ext, magic_bytes in test_cases:
+            with tempfile.NamedTemporaryFile(suffix=ext, delete=False, mode="wb") as f:
+                f.write(magic_bytes)
+                f.write(b"image data")
                 f.flush()
                 path = Path(f.name)
                 try:
@@ -408,8 +418,12 @@ class TestConcatenation(unittest.TestCase):
                 f.flush()
                 files.append(f.name)
 
-            # Create a binary file
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            # Create a real binary file (with null bytes and PDF magic)
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False, mode="wb") as f:
+                # PDF magic bytes
+                f.write(b"%PDF-1.4\n")
+                # Add some binary content
+                f.write(b"\x00\x01\x02\x03\x04\x05")
                 f.write(b"Binary content")
                 f.flush()
                 files.append(f.name)

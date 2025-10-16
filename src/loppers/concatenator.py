@@ -5,65 +5,76 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import filetype
+
 from loppers.loppers import extract
 from loppers.mapping import get_language
 
 
-def is_binary_file(file_path: Path, chunk_size: int = 8192) -> bool:
-    """Detect if a file is binary by checking for null bytes and known extensions.
+def is_binary_file(file_path: Path) -> bool:
+    """Detect if a file is binary using libmagic via filetype library.
 
+    Uses the filetype library to detect file types based on magic bytes.
     A file is considered binary if:
-    1. It has a known binary file extension, OR
-    2. It contains null bytes in the first chunk, OR
-    3. It cannot be decoded as UTF-8
+    - It has a detected MIME type that indicates binary content
+    - It cannot be decoded as UTF-8 text
 
     Args:
         file_path: Path to the file to check
-        chunk_size: Number of bytes to read for detection (default: 8KB)
 
     Returns:
         True if file appears to be binary, False if text-based
     """
-    # Known binary file extensions
-    BINARY_EXTENSIONS = {
-        # Images
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".ico", ".webp",
-        # Audio/Video
-        ".mp3", ".mp4", ".wav", ".avi", ".mov", ".flv", ".mkv", ".m4a",
-        # Archives
-        ".zip", ".tar", ".gz", ".rar", ".7z", ".bz2", ".xz",
-        # Compiled/Executable
-        ".exe", ".dll", ".so", ".dylib", ".o", ".a", ".lib",
-        # Documents (some)
-        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
-        # Data/Database
-        ".db", ".sqlite", ".bin", ".dat", ".pyc", ".pyo",
-        # Other
-        ".jar", ".class", ".woff", ".woff2", ".ttf", ".otf",
-    }
-
-    # Check extension first (fast path)
-    if file_path.suffix.lower() in BINARY_EXTENSIONS:
-        return True
-
-    # Check for null bytes and UTF-8 decodability
     try:
-        with open(file_path, "rb") as f:
-            chunk = f.read(chunk_size)
-            if not chunk:
-                # Empty file is not binary
+        # Detect file type using magic bytes
+        kind = filetype.guess(str(file_path))
+
+        # If filetype detected it as a file with a MIME type, check if it's binary
+        if kind is not None:
+            # Text-based MIME types
+            TEXT_MIME_PREFIXES = (
+                "text/",
+                "application/json",
+                "application/xml",
+                "application/x-yaml",
+                "application/javascript",
+                "application/typescript",
+                "application/x-python",
+                "application/x-sh",
+                "application/x-perl",
+                "application/x-ruby",
+                "application/x-java",
+                "application/x-kotlin",
+                "application/x-go",
+                "application/x-rust",
+            )
+            mime = kind.mime
+            if mime.startswith(TEXT_MIME_PREFIXES):
                 return False
-            # Check for null bytes
-            if b"\x00" in chunk:
-                return True
-            # Try to decode as UTF-8
-            chunk.decode("utf-8")
-            return False
-    except (IOError, OSError):
+            # Known binary MIME types - any other detected type is likely binary
+            return True
+
+        # If filetype couldn't determine type, try UTF-8 decoding
+        # (fallback for files with no magic bytes signature)
+        try:
+            with open(file_path, "rb") as f:
+                # Read first 8KB to check
+                chunk = f.read(8192)
+                if not chunk:
+                    # Empty file is not binary
+                    return False
+                # Check for null bytes (common in binary files)
+                if b"\x00" in chunk:
+                    return True
+                # Try to decode as UTF-8
+                chunk.decode("utf-8")
+                return False
+        except (UnicodeDecodeError, IOError, OSError):
+            # If decoding fails, likely binary
+            return True
+
+    except (IOError, OSError, ValueError):
         # If we can't read the file, assume it's binary
-        return True
-    except UnicodeDecodeError:
-        # If it's not valid UTF-8, it's likely binary
         return True
 
 

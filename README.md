@@ -85,7 +85,7 @@ print(result)
 - Includes original content for unsupported file types
 - Files separated by `---` headers
 
-**Binary File Detection**: Files are considered binary if they have a known binary extension (`.pdf`, `.jpg`, `.exe`, etc.), contain null bytes, or fail UTF-8 decoding.
+**Binary File Detection**: Uses the `filetype` library to detect files by their magic bytes (most accurate). Falls back to UTF-8 decoding and null byte detection for files without magic signatures.
 
 ## Supported Languages
 
@@ -254,20 +254,19 @@ Collect files from paths, excluding binary files.
 
 **Returns:** Sorted list of file paths
 
-### `is_binary_file(file_path, chunk_size=8192) -> bool`
+### `is_binary_file(file_path) -> bool`
 
-Detect if a file is binary.
+Detect if a file is binary using the `filetype` library.
 
 **Args:**
 - `file_path`: Path to file
-- `chunk_size`: Bytes to read for detection (default: 8KB)
 
 **Returns:** True if binary, False if text
 
 **Detection Method:**
-- Checks known binary extensions (.pdf, .jpg, .exe, etc.)
-- Scans for null bytes in file
-- Attempts UTF-8 decoding
+1. Uses `filetype` library to analyze magic bytes (most reliable)
+2. Checks against known text MIME types (text/*, application/json, etc.)
+3. Falls back to UTF-8 decoding and null byte detection for unrecognized files
 
 ## Adding Languages
 
