@@ -106,10 +106,13 @@ known-first-party = ["loppers"]
 # Python Semantic Release configuration
 [tool.semantic_release]
 version_pattern = "v{version}"
-version_variable = "src/loppers/__init__.py:__version__"
+version_variable = "pyproject.toml:version"
 upload_to_pypi = false
 build_command = ""
 branch = "main"
 commit_message = "chore(release): {version}"
 allow_zero_version = false
 logging_use_colored_logs = true
+parser_angular_patch_types = ["fix", "perf"]
+parser_angular_minor_types = ["feat"]
+parser_angular_major_types = ["BREAKING CHANGE"]
