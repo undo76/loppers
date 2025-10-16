@@ -34,6 +34,9 @@ dependencies = ["tree-sitter>=0.25.0", "tree-sitter-language-pack>=0.10.0"]
 [project.optional-dependencies]
 dev = ["pytest>=7.0.0", "pytest-cov>=4.0.0", "ruff>=0.1.0"]
 
+[project.scripts]
+loppers = "loppers.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/undo76/loppers"
 Documentation = "https://github.com/undo76/loppers#readme"
