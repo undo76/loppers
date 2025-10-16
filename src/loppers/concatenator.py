@@ -5,19 +5,19 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import filetype
+from binaryornot.check import is_binary
 
 from loppers.loppers import extract
 from loppers.mapping import get_language
 
 
 def is_binary_file(file_path: Path) -> bool:
-    """Detect if a file is binary using libmagic via filetype library.
+    """Detect if a file is binary.
 
-    Uses the filetype library to detect file types based on magic bytes.
-    A file is considered binary if:
-    - It has a detected MIME type that indicates binary content
-    - It cannot be decoded as UTF-8 text
+    Uses the binaryornot library which employs multiple detection methods:
+    - Known binary file extensions
+    - Null byte detection
+    - UTF-8 decoding validation
 
     Args:
         file_path: Path to the file to check
@@ -26,54 +26,8 @@ def is_binary_file(file_path: Path) -> bool:
         True if file appears to be binary, False if text-based
     """
     try:
-        # Detect file type using magic bytes
-        kind = filetype.guess(str(file_path))
-
-        # If filetype detected it as a file with a MIME type, check if it's binary
-        if kind is not None:
-            # Text-based MIME types
-            TEXT_MIME_PREFIXES = (
-                "text/",
-                "application/json",
-                "application/xml",
-                "application/x-yaml",
-                "application/javascript",
-                "application/typescript",
-                "application/x-python",
-                "application/x-sh",
-                "application/x-perl",
-                "application/x-ruby",
-                "application/x-java",
-                "application/x-kotlin",
-                "application/x-go",
-                "application/x-rust",
-            )
-            mime = kind.mime
-            if mime.startswith(TEXT_MIME_PREFIXES):
-                return False
-            # Known binary MIME types - any other detected type is likely binary
-            return True
-
-        # If filetype couldn't determine type, try UTF-8 decoding
-        # (fallback for files with no magic bytes signature)
-        try:
-            with open(file_path, "rb") as f:
-                # Read first 8KB to check
-                chunk = f.read(8192)
-                if not chunk:
-                    # Empty file is not binary
-                    return False
-                # Check for null bytes (common in binary files)
-                if b"\x00" in chunk:
-                    return True
-                # Try to decode as UTF-8
-                chunk.decode("utf-8")
-                return False
-        except (UnicodeDecodeError, IOError, OSError):
-            # If decoding fails, likely binary
-            return True
-
-    except (IOError, OSError, ValueError):
+        return is_binary(str(file_path))
+    except (IOError, OSError):
         # If we can't read the file, assume it's binary
         return True
 

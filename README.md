@@ -85,7 +85,7 @@ print(result)
 - Includes original content for unsupported file types
 - Files separated by `---` headers
 
-**Binary File Detection**: Uses the `filetype` library to detect files by their magic bytes (most accurate). Falls back to UTF-8 decoding and null byte detection for files without magic signatures.
+**Binary File Detection**: Uses the `binaryornot` library for simple, reliable binary file detection.
 
 ## Supported Languages
 
@@ -256,7 +256,7 @@ Collect files from paths, excluding binary files.
 
 ### `is_binary_file(file_path) -> bool`
 
-Detect if a file is binary using the `filetype` library.
+Detect if a file is binary using the `binaryornot` library.
 
 **Args:**
 - `file_path`: Path to file
@@ -264,9 +264,10 @@ Detect if a file is binary using the `filetype` library.
 **Returns:** True if binary, False if text
 
 **Detection Method:**
-1. Uses `filetype` library to analyze magic bytes (most reliable)
-2. Checks against known text MIME types (text/*, application/json, etc.)
-3. Falls back to UTF-8 decoding and null byte detection for unrecognized files
+Uses the `binaryornot` library which checks:
+- Known binary file extensions
+- Null bytes in file content
+- UTF-8 decoding success
 
 ## Adding Languages
 
