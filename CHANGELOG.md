@@ -1,6 +1,25 @@
 # CHANGELOG
 
+## v1.2.0 (2025-10-16)
+
+### Feature
+
+* feat: Add __version__ to package for semantic-release versioning
+
+Add __version__ string to src/loppers/__init__.py that semantic-release
+can update. This is more reliable than updating TOML files.
+
+semantic-release will now update this version on releases.
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`9ada3a1`](https://github.com/undo76/loppers/commit/9ada3a17fa7c8caa04067a8d172b75d78dd074d4))
+
 ## v1.1.3 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.1.3 ([`f979f10`](https://github.com/undo76/loppers/commit/f979f106261cc8ee97c6fd468ad515222db73e02))
 
 ### Fix
 
