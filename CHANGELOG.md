@@ -1,6 +1,58 @@
 # CHANGELOG
 
+## v1.6.0 (2025-10-16)
+
+### Feature
+
+* feat: Add support for advanced language constructs
+
+**Languages Enhanced:**
+- **TypeScript/JavaScript**: Interface definitions, type aliases, class inheritance
+- **Rust**: Struct definitions, trait definitions, trait implementations
+- **Java**: Interface definitions, interface implementations, annotations
+- **C#**: Property accessors (get/set), interface definitions
+- **Python**: Abstract base classes, class inheritance, class decorators
+- **Ruby**: Module definitions, module mixins, class inheritance
+- **PHP**: Interface definitions, trait definitions, class inheritance
+- **Go**: Interface definitions, struct definitions, method receivers
+
+**Arrow Functions Improvement:**
+- Replace arrow function bodies with `{}` instead of removing entire lines
+- Handles simple expressions: `() =&gt; x + 1` becomes `() =&gt; {}`
+- Handles nested arrows correctly by processing replacements in reverse order
+- Works with all expression types: identifiers, calls, arrays, etc.
+
+**Sample Files Updated:**
+- Added comprehensive examples showing interfaces, traits, structs
+- Examples now demonstrate skeleton extraction of complex type definitions
+- All samples include both basic and advanced language constructs
+
+**Key Changes:**
+- C# now captures accessor_declaration bodies for property get/set
+- All sample files enriched with interfaces, traits, structs, and inheritance
+- Runner demonstrates extraction of advanced language constructs
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`e82ce2d`](https://github.com/undo76/loppers/commit/e82ce2d4fe3c24f15d136ce0d8fbb2a31e5808b7))
+
+### Fix
+
+* fix: Preserve closing braces in brace-based languages
+
+- JavaScript/TypeScript/C/C++/Java: Remove body but keep closing brace
+- Python/Ruby: Remove all body lines (no braces to preserve)
+- Fixes issue where closing braces were incorrectly removed
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`91f13db`](https://github.com/undo76/loppers/commit/91f13db7c95a062ae7464fda920145f3d3819954))
+
 ## v1.5.0 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.5.0 ([`100c317`](https://github.com/undo76/loppers/commit/100c317ef7daf99f084143b85b1185b7685d65fe))
 
 ### Feature
 
