@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "loppers"
-version = "0.1.0"
+version = "1.0.0"
 description = "Extract source file skeletons using tree-sitter queries"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -103,7 +103,7 @@ known-first-party = ["loppers"]
 [tool.semantic_release]
 version_pattern = "v{version}"
 version_variable = "pyproject.toml:version"
-upload_to_pypi = false
+upload_to_pypi = true
 build_command = "uv run python -m build"
 branch = "main"
 commit_message = "chore(release): {version}"
