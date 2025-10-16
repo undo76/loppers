@@ -35,13 +35,13 @@ dependencies = ["tree-sitter>=0.25.0", "tree-sitter-language-pack>=0.10.0"]
 dev = ["pytest>=7.0.0", "pytest-cov>=4.0.0", "ruff>=0.1.0"]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/loppers"
-Documentation = "https://github.com/yourusername/loppers#readme"
-Repository = "https://github.com/yourusername/loppers"
-Issues = "https://github.com/yourusername/loppers/issues"
+Homepage = "https://github.com/undo76/loppers"
+Documentation = "https://github.com/undo76/loppers#readme"
+Repository = "https://github.com/undo76/loppers"
+Issues = "https://github.com/undo76/loppers/issues"
 
 [tool.uv]
-dev-dependencies = ["pytest>=7.0.0", "pytest-cov>=4.0.0", "ruff>=0.1.0"]
+dev-dependencies = ["pytest>=7.0.0", "pytest-cov>=4.0.0", "ruff>=0.1.0", "python-semantic-release>=8.0.0"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -95,3 +95,12 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["loppers"]
+
+# Python Semantic Release configuration
+[tool.semantic_release]
+version_pattern = "v{version}"
+version_variable = "pyproject.toml:version"
+upload_to_pypi = false
+build_command = "uv build"
+branch = "main"
+commit_message = "chore(release): {version}"
