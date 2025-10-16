@@ -15,7 +15,6 @@ Removes function implementations while preserving structure, signatures, and doc
 - ✅ **Fully Typed** - Complete type hints throughout
 - ✅ **CLI & Library** - Use as command-line tool or Python library
 
-See [HANDLED_CASES.md](HANDLED_CASES.md) for comprehensive supported language features.
 
 ## Quick Start
 
@@ -101,20 +100,145 @@ loppers -r . -o combined.txt
 loppers -v -r src/
 ```
 
+## Examples: Before and After
+
+### Python Example
+
+**Before:**
+```python
+class Calculator:
+    def __init__(self, name: str):
+        """Initialize calculator."""
+        self.name = name
+        self._setup()
+
+    def process(self, data):
+        """Process data."""
+        result = []
+        for item in data:
+            result.append(item * 2)
+        return result
+```
+
+**After:**
+```python
+class Calculator:
+    def __init__(self, name: str):
+        """Initialize calculator."""
+
+    def process(self, data):
+        """Process data."""
+```
+
+### JavaScript/TypeScript Example
+
+**Before:**
+```typescript
+class UserService {
+    constructor(baseUrl: string) {
+        this.baseUrl = baseUrl;
+        this.cache = {};
+    }
+
+    async getUser(id: string) {
+        if (this.cache[id]) return this.cache[id];
+        const user = await fetch(this.baseUrl + '/' + id);
+        return user.json();
+    }
+}
+```
+
+**After:**
+```typescript
+class UserService {
+    constructor(baseUrl: string) {
+    }
+
+    async getUser(id: string) {
+    }
+}
+```
+
+### Java Example
+
+**Before:**
+```java
+public class UserService {
+    private String baseUrl;
+
+    public UserService(String baseUrl) {
+        this.baseUrl = baseUrl;
+        this.validate();
+    }
+
+    public User getUserById(String id) {
+        Database db = new Database();
+        return db.query(id);
+    }
+
+    private void validate() {
+        if (baseUrl == null) {
+            throw new IllegalArgumentException("BaseUrl required");
+        }
+    }
+}
+```
+
+**After:**
+```java
+public class UserService {
+    private String baseUrl;
+
+    public UserService(String baseUrl) {
+    }
+
+    public User getUserById(String id) {
+    }
+
+    private void validate() {
+    }
+}
+```
+
 ## Supported Languages
 
 | Language | Features |
 |----------|----------|
-| **Python** | Functions, methods, docstrings preserved |
-| **JavaScript/TypeScript** | Functions, arrow functions, methods |
-| **Java** | Functions, constructors, methods |
-| **Kotlin** | Functions, properties (getters/setters) |
-| **Go** | Functions, methods |
+| **Python** | Functions, methods, `__init__`, `@property`, docstrings |
+| **JavaScript/TypeScript** | Functions, arrow functions, methods, async/await |
+| **Java** | Methods, constructors, static methods, annotations |
+| **Kotlin** | Functions, methods, properties (getters/setters) |
+| **Go** | Functions, methods, closures |
 | **Rust** | Functions, methods, closures |
-| **C/C++** | Functions, methods |
-| **C#** | Methods, properties (get/set) |
-| **Ruby** | Methods, singleton methods |
-| **PHP** | Methods, functions |
+| **C/C++** | Functions, methods, constructors |
+| **C#** | Methods, properties (get/set), async/await |
+| **Ruby** | Methods, singleton methods, blocks |
+| **PHP** | Functions, methods, closures |
+
+### What Gets Preserved
+
+- ✅ Function/method signatures
+- ✅ Parameter types and defaults
+- ✅ Return types
+- ✅ Class definitions
+- ✅ Import statements
+- ✅ Comments
+- ✅ Python docstrings
+- ✅ Decorators
+- ✅ Access modifiers (public, private, protected)
+
+### What Gets Removed
+
+- ❌ Function/method bodies
+- ❌ Local variable assignments
+- ❌ Logic and implementation details
+- ❌ Nested function implementations
+
+### Known Limitations
+
+- Concise arrow functions (`const f = x => x * 2`) - no body to remove
+- Python lambdas - no body to remove
+- Some edge cases with getters/setters in JavaScript/TypeScript
 
 ## API Reference
 
@@ -356,9 +480,9 @@ loppers/
 │   ├── sample.kt                # Kotlin examples
 │   └── ...                       # Other language samples
 ├── pyproject.toml               # Project configuration
-├── README.md                    # This file
-├── HANDLED_CASES.md             # Detailed language support
-└── DEVELOPMENT.md               # Development guide
+├── README.md                    # Main documentation (this file)
+├── CHANGELOG.md                 # Release history
+└── CLAUDE.md                    # Claude Code development guide
 ```
 
 ## Dependencies
