@@ -39,10 +39,9 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
         body_query=(
             "[(function_declaration body: (statement_block) @body) "
             "(generator_function_declaration body: (statement_block) @body) "
-            "(arrow_function body: (statement_block) @body) "
+            "(arrow_function body: (_) @body) "
             "(function_expression body: (statement_block) @body) "
-            "(method_definition body: (statement_block) @body) "
-            "(arrow_function (parenthesized_expression) @body)]"
+            "(method_definition body: (statement_block) @body)]"
         ),
     ),
     "typescript": LanguageConfig(
@@ -50,10 +49,9 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
         body_query=(
             "[(function_declaration body: (statement_block) @body) "
             "(generator_function_declaration body: (statement_block) @body) "
-            "(arrow_function body: (statement_block) @body) "
+            "(arrow_function body: (_) @body) "
             "(function_expression body: (statement_block) @body) "
-            "(method_definition body: (statement_block) @body) "
-            "(arrow_function (parenthesized_expression) @body)]"
+            "(method_definition body: (statement_block) @body)]"
         ),
     ),
     "java": LanguageConfig(
@@ -202,32 +200,33 @@ class SkeletonExtractor:
         cursor: QueryCursor = QueryCursor(query)
         captures: list[tuple[Node, str]] = cursor.captures(tree.root_node)
 
-        # Collect line ranges to remove
+        # Collect line ranges to remove and replacements to make
         lines_to_remove: Set[int] = set()
+        replacements_by_line: Dict[int, list[tuple[int, int, str]]] = {}
+
+        # First pass: collect all replacements and line removals
         for capture_name, node_list in captures.items():
             for node in node_list:
                 start_line: int = node.start_point[0]
                 end_line: int = node.end_point[0]
 
-
-                # For parenthesized_expression in JS/TS, keep parens but remove content
-                if node.type == "parenthesized_expression" and self.language in ("javascript", "typescript"):
-                    # Find the opening and closing paren positions
+                # For arrow function bodies in JS/TS, replace with {}
+                if node.type != "statement_block" and self.language in ("javascript", "typescript"):
                     if start_line == end_line:
-                        # Single line: (, content, ) - remove content between parens
-                        # Find positions of ( and )
-                        line_text = lines[start_line] if start_line < len(lines) else ""
-                        open_paren = line_text.find("(")
-                        close_paren = line_text.rfind(")")
-                        if open_paren >= 0 and close_paren > open_paren:
-                            # Replace content with space
-                            lines[start_line] = line_text[:open_paren+1] + " " + line_text[close_paren:]
+                        # Single line: record replacement to apply later
+                        start_col = node.start_point[1]
+                        end_col = node.end_point[1]
+                        if start_line not in replacements_by_line:
+                            replacements_by_line[start_line] = []
+                        replacements_by_line[start_line].append((start_col, end_col, "{}"))
                     else:
-                        # Multi-line: skip inner lines, keep opening ( and closing )
-                        # Remove lines between start and end, but keep the parens
-                        skip_start = start_line + 1
-                        end_inclusive = end_line
-                        for line_num in range(skip_start, end_inclusive):
+                        # Multi-line: replace with {} on first line, remove rest
+                        start_col = node.start_point[1]
+                        if start_line not in replacements_by_line:
+                            replacements_by_line[start_line] = []
+                        replacements_by_line[start_line].append((start_col, len(lines[start_line]), "{}"))
+                        # Remove subsequent lines of the expression
+                        for line_num in range(start_line + 1, end_line + 1):
                             lines_to_remove.add(line_num)
                     continue
 
@@ -260,6 +259,17 @@ class SkeletonExtractor:
 
                 for line_num in range(skip_start, end_inclusive):
                     lines_to_remove.add(line_num)
+
+        # Apply replacements in reverse order on each line (right to left)
+        # to avoid position shifts when modifying the line
+        for line_num in sorted(replacements_by_line.keys()):
+            replacements = replacements_by_line[line_num]
+            # Sort by start position in reverse order
+            replacements.sort(key=lambda x: x[0], reverse=True)
+            line_text = lines[line_num]
+            for start_col, end_col, replacement in replacements:
+                line_text = line_text[:start_col] + replacement + line_text[end_col:]
+            lines[line_num] = line_text
 
         # Build skeleton by keeping non-body lines
         skeleton: list[str] = []
