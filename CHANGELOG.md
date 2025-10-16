@@ -1,6 +1,28 @@
 # CHANGELOG
 
+## v1.4.1 (2025-10-16)
+
+### Fix
+
+* fix: Support generator functions in JavaScript/TypeScript
+
+- Add generator_function_declaration to body query
+- Handles async function* (async generators)
+- Removes generator function bodies while preserving signatures
+
+Example:
+Before: export async function* asyncRange(from, to) { ... }
+After:  export async function* asyncRange(from, to) { }
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`e40ae1f`](https://github.com/undo76/loppers/commit/e40ae1fd29775e68967dd9466b1ad94ef7ad1a7a))
+
 ## v1.4.0 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.4.0 ([`ce4d00d`](https://github.com/undo76/loppers/commit/ce4d00df8aeed0a75ad24dcb4627eeb6e9dfc44a))
 
 ### Documentation
 
