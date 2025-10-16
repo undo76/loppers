@@ -6,6 +6,8 @@ Compatible with tree-sitter >= 0.25
 
 from __future__ import annotations
 
+__version__ = "1.0.1"
+
 from loppers.concatenator import collect_files, concatenate_files, is_binary_file
 from loppers.loppers import SkeletonExtractor, extract
 from loppers.mapping import EXTENSION_TO_LANGUAGE, get_language

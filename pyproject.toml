@@ -106,7 +106,7 @@ known-first-party = ["loppers"]
 # Python Semantic Release configuration
 [tool.semantic_release]
 version_pattern = "v{version}"
-version_variable = "pyproject.toml:project.version"
+version_variable = "src/loppers/__init__.py:__version__"
 upload_to_pypi = false
 build_command = ""
 branch = "main"
