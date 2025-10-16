@@ -45,6 +45,9 @@ EXTENSION_TO_LANGUAGE: dict[str, str] = {
     ".php4": "php",
     ".php5": "php",
     ".phps": "php",
+    # Kotlin
+    ".kt": "kotlin",
+    ".kts": "kotlin",
 }
 
 

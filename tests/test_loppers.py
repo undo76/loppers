@@ -58,6 +58,7 @@ def process(
             "csharp",
             "ruby",
             "php",
+            "kotlin",
         ]
         for lang in languages:
             try:
@@ -236,9 +237,9 @@ class Service {
         $callback = function($item) {
             return $item * 2;
         };
-        
+
         $arrow = fn($x) => $x + 1;
-        
+
         return array_map($callback, $data);
     }
 }
@@ -246,6 +247,41 @@ class Service {
         skeleton: str = extract(code, "php")
         self.assertIn("public function process", skeleton)
         self.assertNotIn("return $item * 2", skeleton)
+
+    def test_kotlin_functions_and_properties(self) -> None:
+        """Test Kotlin function and property extraction."""
+        code: str = '''
+fun greet(name: String): String {
+    return "Hello, $name"
+}
+
+class User {
+    private var _age: Int = 0
+
+    var age: Int
+        get() {
+            return _age
+        }
+        set(value) {
+            _age = value
+        }
+
+    fun validate() {
+        if (_age < 0) throw IllegalArgumentException("Invalid age")
+    }
+
+    fun getName(): String {
+        return "User"
+    }
+}
+'''
+        skeleton: str = extract(code, "kotlin")
+        self.assertIn("fun greet(name: String): String", skeleton)
+        self.assertIn("fun validate()", skeleton)
+        self.assertIn("fun getName(): String", skeleton)
+        self.assertIn("var age: Int", skeleton)
+        self.assertNotIn('return "Hello, $name"', skeleton)
+        self.assertNotIn("throw IllegalArgumentException", skeleton)
 
 
 if __name__ == "__main__":

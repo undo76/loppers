@@ -104,6 +104,14 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
             "[(method_declaration body: (compound_statement) @body)]"
         ),
     ),
+    "kotlin": LanguageConfig(
+        name="kotlin",
+        body_query=(
+            "[(function_declaration (function_body) @body) "
+            "(getter (function_body) @body) "
+            "(setter (function_body) @body)]"
+        ),
+    ),
 }
 
 

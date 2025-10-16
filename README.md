@@ -15,7 +15,7 @@ Removes function implementations while preserving structure and signatures.
 - ✅ **Docstrings** - Python docstrings preserved
 - ✅ **Decorators** - Preserved (Python, Java)
 - ✅ **Type Hints** - Fully typed library
-- ✅ **11 Languages** - Python, JS/TS, Java, Go, Rust, C/C++, C#, Ruby, PHP
+- ✅ **12 Languages** - Python, JS/TS, Java, Kotlin, Go, Rust, C/C++, C#, Ruby, PHP
 
 See [HANDLED_CASES.md](HANDLED_CASES.md) for comprehensive list of supported cases.
 
@@ -67,6 +67,7 @@ def calculate(x: int, y: int) -> int:
 - Python (with docstring preservation)
 - JavaScript / TypeScript (including arrow functions)
 - Java (including constructors)
+- Kotlin (functions, getters, setters)
 - Go
 - Rust
 - C / C++
