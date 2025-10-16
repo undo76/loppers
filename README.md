@@ -118,6 +118,53 @@ uv run ruff format .
 uv run ruff check . && uv run ruff format .
 ```
 
+### Release & Publishing
+
+This project uses [Python Semantic Release](https://python-semantic-release.readthedocs.io/) for automated versioning and publishing to PyPI.
+
+#### Prerequisites
+
+- GitHub repository with branch protection rules (if desired)
+- PyPI account with a token
+- GitHub token (for pushing version commits)
+
+#### Publish to PyPI
+
+```bash
+# Requires: GITHUB_TOKEN and PYPI_TOKEN environment variables set
+# The command will:
+# 1. Analyze commits since last release using conventional commits
+# 2. Bump version automatically (major/minor/patch)
+# 3. Build package distributions (sdist + wheel)
+# 4. Publish to PyPI
+
+uv run semantic-release publish
+```
+
+#### Manual Build (without publishing)
+
+```bash
+# Build distributions locally (creates dist/ folder)
+uv run python -m build
+
+# View built files
+ls -lh dist/
+```
+
+#### Configuration
+
+Release settings are in `pyproject.toml` under `[tool.semantic_release]`:
+- Version pattern, branch, build command, etc.
+- See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed configuration
+
+#### Commit Message Format
+
+Uses [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` - New feature (bumps minor version)
+- `fix:` - Bug fix (bumps patch version)
+- `BREAKING CHANGE:` - Major version bump
+- `docs:`, `chore:`, `refactor:` - No version bump
+
 ### How It Works
 
 Uses tree-sitter queries to find and remove function/method body nodes while keeping:
