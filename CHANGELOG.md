@@ -1,6 +1,53 @@
 # CHANGELOG
 
+## v1.2.1 (2025-10-16)
+
+### Fix
+
+* fix: Add hatchling version configuration
+
+Configure tool.hatch.version to read from top-level version field in
+pyproject.toml using regex pattern matching.
+
+This allows:
+- Hatchling to find the version when building
+- semantic-release to update the top-level version field
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`f29c9c9`](https://github.com/undo76/loppers/commit/f29c9c9147f7310eebe1eff07214487b86cd7afd))
+
+* fix: Use top-level version field for semantic-release
+
+- Move version to top-level in pyproject.toml
+- Mark version as dynamic in [project] section
+- Use version_variables (plural) configuration
+- This allows semantic-release to update version at top level
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`e08e3e9`](https://github.com/undo76/loppers/commit/e08e3e9ad637526d7ceaf8da3671c0e9894b3fde))
+
+* fix: Configure semantic-release for proper version updates
+
+- Use standard version_variable path: pyproject.toml:version
+- Add explicit parser configuration for conventional commits
+- Remove __version__ from __init__ (use pyproject.toml as single source)
+- Keep build_command empty (publish workflow handles building)
+
+This setup separates concerns:
+- semantic-release: Updates version, creates tags/releases
+- publish workflow: Builds and publishes to PyPI
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`2c51d6c`](https://github.com/undo76/loppers/commit/2c51d6ca0fb56720082854292deeedc217102328))
+
 ## v1.2.0 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.2.0 ([`109852d`](https://github.com/undo76/loppers/commit/109852d327bd72514a3eb132c380cd84a7eb0b14))
 
 ### Feature
 
