@@ -112,6 +112,36 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
             "(setter (function_body) @body)]"
         ),
     ),
+    "swift": LanguageConfig(
+        name="swift",
+        body_query=(
+            "[(function_declaration (function_body) @body)]"
+        ),
+    ),
+    "lua": LanguageConfig(
+        name="lua",
+        body_query=(
+            "[(function_declaration (block) @body)]"
+        ),
+    ),
+    "scala": LanguageConfig(
+        name="scala",
+        body_query=(
+            "[(function_definition (block) @body)]"
+        ),
+    ),
+    "groovy": LanguageConfig(
+        name="groovy",
+        body_query=(
+            "[((block (unit (func))) @body)]"
+        ),
+    ),
+    "objc": LanguageConfig(
+        name="objc",
+        body_query=(
+            "[(compound_statement) @body]"
+        ),
+    ),
 }
 
 
@@ -189,12 +219,19 @@ class SkeletonExtractor:
 
                 # For languages with braces, skip the opening brace line if it contains the declaration
                 # (Ruby uses def...end, so body capture doesn't include the def line)
-                if self.language not in ("python", "ruby") and start_line < end_line:
+                # (Lua uses def...end, so body capture doesn't include the def line)
+                if self.language not in ("python", "ruby", "lua") and start_line < end_line:
                     skip_start = start_line + 1
 
-                # For brace-based languages, preserve closing brace (don't include end_line)
-                # For Python/Ruby, remove everything including end_line
-                end_inclusive = end_line + 1 if self.language in ("python", "ruby") else end_line
+                # For single-line bodies (like Lua), include the line in removal
+                if start_line == end_line:
+                    end_inclusive = end_line + 1
+                # For multi-line bodies:
+                # - Python/Ruby/Lua: remove everything including end_line
+                # - Other languages: preserve closing brace (don't include end_line)
+                else:
+                    end_inclusive = end_line + 1 if self.language in ("python", "ruby", "lua") else end_line
+
                 for line_num in range(skip_start, end_inclusive):
                     lines_to_remove.add(line_num)
 

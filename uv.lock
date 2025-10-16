@@ -393,7 +393,6 @@ wheels = [
 
 [[package]]
 name = "loppers"
-version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "binaryornot" },

@@ -2,13 +2,13 @@
 
 **Extract source file skeletons using tree-sitter queries.**
 
-Removes function implementations while preserving structure, signatures, and docstrings. Supports 12+ programming languages with a simple, fully-typed Python API.
+Removes function implementations while preserving structure, signatures, and docstrings. Supports 17 programming languages with a simple, fully-typed Python API.
 
 **Requires: tree-sitter >= 0.25**
 
 ## Features
 
-- ✅ **12 Languages** - Python, JS/TS, Java, Kotlin, Go, Rust, C/C++, C#, Ruby, PHP
+- ✅ **17 Languages** - Python, JS/TS, Java, Kotlin, Go, Rust, C/C++, C#, Ruby, PHP, Swift, Lua, Scala, Groovy, Objective-C
 - ✅ **Smart Extraction** - Functions, methods, constructors, arrow functions, getters/setters
 - ✅ **Preserved Elements** - Signatures, class definitions, imports, docstrings, decorators
 - ✅ **File Operations** - Concatenate files/directories with binary detection
@@ -214,6 +214,11 @@ public class UserService {
 | **C#** | Methods, properties (get/set), async/await |
 | **Ruby** | Methods, singleton methods, blocks |
 | **PHP** | Functions, methods, closures |
+| **Swift** | Functions, methods, closures |
+| **Lua** | Functions, local functions |
+| **Scala** | Functions, methods, closures |
+| **Groovy** | Functions, methods, closures |
+| **Objective-C** | Methods, instance/class methods |
 
 ### What Gets Preserved
 

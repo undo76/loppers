@@ -61,6 +61,11 @@ def process(
             "ruby",
             "php",
             "kotlin",
+            "swift",
+            "lua",
+            "scala",
+            "groovy",
+            "objc",
         ]
         for lang in languages:
             try:
@@ -249,6 +254,110 @@ class Service {
         skeleton: str = extract(code, "php")
         self.assertIn("public function process", skeleton)
         self.assertNotIn("return $item * 2", skeleton)
+
+    def test_swift_functions_and_methods(self) -> None:
+        """Test Swift function and method extraction."""
+        code: str = '''
+func greet(name: String) -> String {
+    return "Hello, \\(name)!"
+}
+
+class Greeter {
+    func sayHello() {
+        print("Hello!")
+    }
+
+    func sayGoodbye(name: String) {
+        print("Goodbye, \\(name)!")
+    }
+}
+'''
+        skeleton: str = extract(code, "swift")
+        self.assertIn("func greet(name: String) -> String", skeleton)
+        self.assertIn("func sayHello()", skeleton)
+        self.assertIn("func sayGoodbye(name: String)", skeleton)
+        self.assertNotIn("print", skeleton)
+        self.assertNotIn("return", skeleton)
+
+    def test_lua_functions(self) -> None:
+        """Test Lua function extraction."""
+        code: str = '''
+function greet(name)
+    local greeting = "Hello " .. name
+    print(greeting)
+    return greeting
+end
+
+function sayGoodbye()
+    print("Goodbye")
+end
+'''
+        skeleton: str = extract(code, "lua")
+        self.assertIn("function greet(name)", skeleton)
+        self.assertIn("function sayGoodbye()", skeleton)
+        self.assertNotIn("local greeting", skeleton)
+        self.assertNotIn("print", skeleton)
+
+    def test_scala_functions_and_methods(self) -> None:
+        """Test Scala function and method extraction."""
+        code: str = '''
+def greet(name: String): String = {
+    val greeting = "Hello " + name
+    println(greeting)
+    greeting
+}
+
+class Greeter {
+    def sayHello(): Unit = {
+        println("Hello!")
+    }
+}
+'''
+        skeleton: str = extract(code, "scala")
+        self.assertIn("def greet(name: String): String =", skeleton)
+        self.assertIn("def sayHello(): Unit =", skeleton)
+        self.assertNotIn("val greeting", skeleton)
+        self.assertNotIn("println", skeleton)
+
+    def test_groovy_functions(self) -> None:
+        """Test Groovy function extraction."""
+        code: str = '''
+def greet(name) {
+    def greeting = "Hello " + name
+    println(greeting)
+    return greeting
+}
+
+class Greeter {
+    def sayHello() {
+        println("Hello!")
+    }
+}
+'''
+        skeleton: str = extract(code, "groovy")
+        self.assertIn("def greet(name)", skeleton)
+        self.assertIn("def sayHello()", skeleton)
+        self.assertNotIn("def greeting", skeleton)
+        self.assertNotIn("println", skeleton)
+
+    def test_objective_c_methods(self) -> None:
+        """Test Objective-C method extraction."""
+        code: str = '''
+- (NSString *)greet:(NSString *)name {
+    NSString *greeting = @"Hello";
+    NSLog(@"%@", greeting);
+    return greeting;
+}
+
+- (void)printMessage {
+    NSLog(@"Message");
+}
+'''
+        skeleton: str = extract(code, "objc")
+        self.assertIn("- (NSString *)greet:(NSString *)name", skeleton)
+        self.assertIn("- (void)printMessage", skeleton)
+        self.assertNotIn("NSString *greeting", skeleton)
+        self.assertNotIn("NSLog", skeleton)
 
     def test_kotlin_functions_and_properties(self) -> None:
         """Test Kotlin function and property extraction."""
