@@ -35,5 +35,3 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          build_command: "uv build"
-          directory: "./"
