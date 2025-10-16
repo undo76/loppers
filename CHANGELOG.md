@@ -1,6 +1,34 @@
 # CHANGELOG
 
+## v1.4.0 (2025-10-16)
+
+### Documentation
+
+* docs: Add MIT license ([`81b26ee`](https://github.com/undo76/loppers/commit/81b26ee29d7ae25ea1fe40b4d2eba968e5937f9c))
+
+### Feature
+
+* feat: Support concise arrow functions in JavaScript/TypeScript
+
+- Add query to match arrow_function with parenthesized_expression bodies
+- Remove function bodies while preserving parentheses: =&gt; () becomes =&gt; ()
+- Works for multi-line concise arrows: =&gt; (...multi-line...) becomes =&gt; ()
+- Single-line concise arrows: (content) becomes ( )
+- Applies to both JavaScript and TypeScript
+
+Example:
+Before: const f = () =&gt; (&lt;div&gt;content&lt;/div&gt;);
+After:  const f = () =&gt; ();
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`d71bb65`](https://github.com/undo76/loppers/commit/d71bb6523924ccf239b704494715c96afc621513))
+
 ## v1.3.0 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.3.0 ([`734c69c`](https://github.com/undo76/loppers/commit/734c69cdd4d5813994c946d101468a528b48f3f2))
 
 ### Feature
 
