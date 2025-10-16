@@ -1,6 +1,25 @@
 # CHANGELOG
 
+## v1.1.3 (2025-10-16)
+
+### Fix
+
+* fix: Correct version_variable path for semantic-release
+
+The version in pyproject.toml is nested under [project], so the path
+should be &#39;pyproject.toml:project.version&#39; not &#39;pyproject.toml:version&#39;.
+
+This enables semantic-release to properly update the version during releases.
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`5a5cace`](https://github.com/undo76/loppers/commit/5a5cace625d76ba366f2d968156cf01b96a41768))
+
 ## v1.1.2 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.1.2 ([`7508e2d`](https://github.com/undo76/loppers/commit/7508e2d5779a9b9fea23047d9bdebc1a2c403a85))
 
 ### Fix
 
