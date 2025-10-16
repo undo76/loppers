@@ -42,7 +42,19 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
             "(arrow_function body: (statement_block) @body) "
             "(function_expression body: (statement_block) @body) "
             "(method_definition body: (statement_block) @body) "
-            "(arrow_function (parenthesized_expression) @body)]"
+            "(arrow_function (parenthesized_expression) @body) "
+            "(arrow_function (identifier) @body) "
+            "(arrow_function (array) @body) "
+            "(arrow_function (object) @body) "
+            "(arrow_function (call_expression) @body) "
+            "(arrow_function (member_expression) @body) "
+            "(arrow_function (subscript_expression) @body) "
+            "(arrow_function (binary_expression) @body) "
+            "(arrow_function (unary_expression) @body) "
+            "(arrow_function (update_expression) @body) "
+            "(arrow_function (assignment_expression) @body) "
+            "(arrow_function (ternary_expression) @body) "
+            "(arrow_function (template_string) @body)]"
         ),
     ),
     "typescript": LanguageConfig(
@@ -53,7 +65,19 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
             "(arrow_function body: (statement_block) @body) "
             "(function_expression body: (statement_block) @body) "
             "(method_definition body: (statement_block) @body) "
-            "(arrow_function (parenthesized_expression) @body)]"
+            "(arrow_function (parenthesized_expression) @body) "
+            "(arrow_function (identifier) @body) "
+            "(arrow_function (array) @body) "
+            "(arrow_function (object) @body) "
+            "(arrow_function (call_expression) @body) "
+            "(arrow_function (member_expression) @body) "
+            "(arrow_function (subscript_expression) @body) "
+            "(arrow_function (binary_expression) @body) "
+            "(arrow_function (unary_expression) @body) "
+            "(arrow_function (update_expression) @body) "
+            "(arrow_function (assignment_expression) @body) "
+            "(arrow_function (ternary_expression) @body) "
+            "(arrow_function (template_string) @body)]"
         ),
     ),
     "java": LanguageConfig(
@@ -208,6 +232,20 @@ class SkeletonExtractor:
             for node in node_list:
                 start_line: int = node.start_point[0]
                 end_line: int = node.end_point[0]
+
+                # For simple arrow function expressions in JS/TS, remove them completely
+                simple_expr_types = {
+                    "identifier", "array", "object", "call_expression", "member_expression",
+                    "subscript_expression", "binary_expression", "unary_expression",
+                    "update_expression", "assignment_expression", "ternary_expression",
+                    "template_string"
+                }
+
+                if node.type in simple_expr_types and self.language in ("javascript", "typescript"):
+                    # Remove all lines of the simple expression
+                    for line_num in range(start_line, end_line + 1):
+                        lines_to_remove.add(line_num)
+                    continue
 
                 # For parenthesized_expression in JS/TS, keep parens but remove content
                 if node.type == "parenthesized_expression" and self.language in ("javascript", "typescript"):
