@@ -185,8 +185,6 @@ class SkeletonExtractor:
         # Collect line ranges to remove
         lines_to_remove: set[int] = set()
         for capture_name, node_list in captures.items():
-            print(f"Processing capture: {capture_name} {node_list}")
-
             for node in node_list:
                 start_line: int = node.start_point[0]
                 end_line: int = node.end_point[0]
