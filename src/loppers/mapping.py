@@ -14,7 +14,7 @@ EXTENSION_TO_LANGUAGE: dict[str, str] = {
     ".cjs": "javascript",
     # TypeScript
     ".ts": "typescript",
-    ".tsx": "typescript",
+    ".tsx": "tsx",
     ".mts": "typescript",
     ".cts": "typescript",
     # Java

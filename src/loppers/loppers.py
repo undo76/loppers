@@ -7,10 +7,9 @@ Compatible with tree-sitter >= 0.25
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Set
 
-from tree_sitter import Language, Node, Parser, Query, QueryCursor, Tree
 import tree_sitter_language_pack
+from tree_sitter import Language, Node, Parser, Query, QueryCursor, Tree
 
 
 @dataclass
@@ -27,18 +26,17 @@ class LanguageConfig:
 
 
 # Language-specific queries for finding bodies to remove
-LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
+
+LANGUAGE_CONFIGS: dict[str, LanguageConfig] = {
     "python": LanguageConfig(
         name="python",
-        body_query=(
-            "[(function_definition body: (block) @body)]"
-        ),
+        body_query=("[(function_definition body: (block) @body)]"),
     ),
     "javascript": LanguageConfig(
         name="javascript",
         body_query=(
             "[(function_declaration body: (statement_block) @body) "
-            "(arrow_function body: (statement_block) @body) "
+            "(arrow_function body: (_) @body) "
             "(function_expression body: (statement_block) @body) "
             "(method_definition body: (statement_block) @body)]"
         ),
@@ -47,7 +45,16 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
         name="typescript",
         body_query=(
             "[(function_declaration body: (statement_block) @body) "
-            "(arrow_function body: (statement_block) @body) "
+            "(arrow_function body: (_) @body) "
+            "(function_expression body: (statement_block) @body) "
+            "(method_definition body: (statement_block) @body)]"
+        ),
+    ),
+    "tsx": LanguageConfig(
+        name="typescript",
+        body_query=(
+            "[(function_declaration body: (statement_block) @body) "
+            "(arrow_function body: (_) @body) "
             "(function_expression body: (statement_block) @body) "
             "(method_definition body: (statement_block) @body)]"
         ),
@@ -62,33 +69,25 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
     "go": LanguageConfig(
         name="go",
         body_query=(
-            "[(function_declaration body: (block) @body) "
-            "(method_declaration body: (block) @body)]"
+            "[(function_declaration body: (block) @body) (method_declaration body: (block) @body)]"
         ),
     ),
     "rust": LanguageConfig(
         name="rust",
-        body_query=(
-            "[(function_item body: (block) @body)]"
-        ),
+        body_query=("[(function_item body: (block) @body)]"),
     ),
     "cpp": LanguageConfig(
         name="cpp",
-        body_query=(
-            "[(function_definition body: (compound_statement) @body)]"
-        ),
+        body_query=("[(function_definition body: (compound_statement) @body)]"),
     ),
     "c": LanguageConfig(
         name="c",
-        body_query=(
-            "[(function_definition body: (compound_statement) @body)]"
-        ),
+        body_query=("[(function_definition body: (compound_statement) @body)]"),
     ),
     "csharp": LanguageConfig(
         name="csharp",
         body_query=(
-            "[(method_declaration body: (block) @body) "
-            "(accessor_declaration body: (block) @body)]"
+            "[(method_declaration body: (block) @body) (accessor_declaration body: (block) @body)]"
         ),
     ),
     "ruby": LanguageConfig(
@@ -100,9 +99,7 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
     ),
     "php": LanguageConfig(
         name="php",
-        body_query=(
-            "[(method_declaration body: (compound_statement) @body)]"
-        ),
+        body_query=("[(method_declaration body: (compound_statement) @body)]"),
     ),
     "kotlin": LanguageConfig(
         name="kotlin",
@@ -114,33 +111,23 @@ LANGUAGE_CONFIGS: Dict[str, LanguageConfig] = {
     ),
     "swift": LanguageConfig(
         name="swift",
-        body_query=(
-            "[(function_declaration (function_body) @body)]"
-        ),
+        body_query=("[(function_declaration (function_body) @body)]"),
     ),
     "lua": LanguageConfig(
         name="lua",
-        body_query=(
-            "[(function_declaration (block) @body)]"
-        ),
+        body_query=("[(function_declaration (block) @body)]"),
     ),
     "scala": LanguageConfig(
         name="scala",
-        body_query=(
-            "[(function_definition (block) @body)]"
-        ),
+        body_query=("[(function_definition (block) @body)]"),
     ),
     "groovy": LanguageConfig(
         name="groovy",
-        body_query=(
-            "[((block (unit (func))) @body)]"
-        ),
+        body_query=("[((block (unit (func))) @body)]"),
     ),
     "objc": LanguageConfig(
         name="objc",
-        body_query=(
-            "[(compound_statement) @body]"
-        ),
+        body_query=("[(compound_statement) @body]"),
     ),
 }
 
@@ -163,17 +150,14 @@ class SkeletonExtractor:
         """
         if language not in LANGUAGE_CONFIGS:
             supported = ", ".join(LANGUAGE_CONFIGS.keys())
-            msg = (
-                f"Language '{language}' not supported. "
-                f"Supported: {supported}"
-            )
+            msg = f"Language '{language}' not supported. Supported: {supported}"
             raise ValueError(msg)
 
         self.language: str = language
         self.config: LanguageConfig = LANGUAGE_CONFIGS[language]
 
         # Load language with tree-sitter >= 0.25 API
-        self.lang: Language = tree_sitter_language_pack.get_language(language)
+        self.lang: Language = tree_sitter_language_pack.get_language(language)  # type: ignore
 
         self.parser: Parser = Parser()
         self.parser.language = self.lang
@@ -196,11 +180,13 @@ class SkeletonExtractor:
         # Find all function bodies to remove
         query: Query = Query(self.lang, self.config.body_query)
         cursor: QueryCursor = QueryCursor(query)
-        captures: list[tuple[Node, str]] = cursor.captures(tree.root_node)
+        captures = cursor.captures(tree.root_node)
 
         # Collect line ranges to remove
-        lines_to_remove: Set[int] = set()
+        lines_to_remove: set[int] = set()
         for capture_name, node_list in captures.items():
+            print(f"Processing capture: {capture_name} {node_list}")
+
             for node in node_list:
                 start_line: int = node.start_point[0]
                 end_line: int = node.end_point[0]
@@ -208,11 +194,11 @@ class SkeletonExtractor:
                 # For Python, preserve docstrings (first string in body)
                 skip_start: int = start_line
                 if self.language == "python" and node.child_count > 0:
-                    first_child: Node = node.child(0)
+                    first_child: Node = node.child(0)  # type: ignore
                     if (
                         first_child.type == "expression_statement"
                         and first_child.child_count > 0
-                        and first_child.child(0).type == "string"
+                        and first_child.child(0).type == "string"  # type: ignore
                     ):
                         # Skip the docstring lines when removing
                         skip_start = first_child.end_point[0] + 1
@@ -230,7 +216,9 @@ class SkeletonExtractor:
                 # - Python/Ruby/Lua: remove everything including end_line
                 # - Other languages: preserve closing brace (don't include end_line)
                 else:
-                    end_inclusive = end_line + 1 if self.language in ("python", "ruby", "lua") else end_line
+                    end_inclusive = (
+                        end_line + 1 if self.language in ("python", "ruby", "lua") else end_line
+                    )
 
                 for line_num in range(skip_start, end_inclusive):
                     lines_to_remove.add(line_num)
