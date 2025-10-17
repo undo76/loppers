@@ -185,66 +185,115 @@ def get_skeleton(file_path: Path | str, *, add_header: bool = False) -> str:
 
 
 def find_files(
-    paths: list[Path | str],
+    root: str | Path,
     *,
     recursive: bool = True,
     ignore_patterns: Sequence[str] | None = None,
     use_default_ignore: bool = True,
     respect_gitignore: bool = True,
-) -> list[Path]:
-    """Collect all non-binary text files from given paths/directories.
+) -> list[str]:
+    """Collect all non-binary text files from a root directory.
 
     Args:
-        paths: List of file and/or directory paths
+        root: Root directory path
         recursive: Recursively traverse directories (default True)
         ignore_patterns: Additional gitignore-style patterns to ignore
         use_default_ignore: Apply built-in ignore patterns (node_modules, .git, etc.)
-        respect_gitignore: Respect .gitignore file in directories when True
+        respect_gitignore: Respect .gitignore file in root when True
 
     Returns:
-        List of Path objects for all collected files (respects ignore patterns and binary detection)
+        List of file paths relative to root (respects ignore patterns and binary detection)
+
+    Raises:
+        FileNotFoundError: If root does not exist
+        NotADirectoryError: If root is not a directory
     """
-    files_to_process: list[Path] = []
+    root_path = Path(root)
+    if not root_path.exists():
+        raise FileNotFoundError(f"Root not found: {root_path}")
+    if not root_path.is_dir():
+        raise NotADirectoryError(f"Expected a directory at: {root_path}")
 
-    for file_path_input in paths:
-        file_path = Path(file_path_input)
+    patterns: list[str] = []
+    if use_default_ignore:
+        patterns.extend(DEFAULT_IGNORE_PATTERNS)
+    if respect_gitignore:
+        gitignore_path = root_path / ".gitignore"
+        if gitignore_path.exists():
+            gitignore_lines = [
+                line.strip()
+                for line in gitignore_path.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            ]
+            patterns.extend(gitignore_lines)
+    if ignore_patterns:
+        patterns.extend(ignore_patterns)
+    spec = PathSpec.from_lines("gitwildmatch", patterns) if patterns else None
 
-        if file_path.is_file():
-            # Single file - only include if not binary
-            if not is_binary(str(file_path)):
-                files_to_process.append(file_path)
-        elif file_path.is_dir():
-            # Directory - collect files
-            if recursive:
-                # Use describe_repository for recursive collection with ignore support
-                _, collected_files = describe_repository(
-                    file_path,
-                    ignore_patterns=ignore_patterns,
-                    use_default_ignore=use_default_ignore,
-                    respect_gitignore=respect_gitignore,
-                )
-                for collected_file in collected_files:
-                    full_path = file_path / collected_file
-                    if not is_binary(str(full_path)):
-                        files_to_process.append(full_path)
-            else:
-                # Non-recursive: just get immediate files
-                for entry in sorted(file_path.iterdir()):
-                    if entry.is_file():
-                        if not is_binary(str(entry)):
-                            files_to_process.append(entry)
+    files_to_process: list[str] = []
 
-    return files_to_process
+    if not recursive:
+        # Non-recursive: just get immediate files
+        for entry in sorted(root_path.iterdir()):
+            if entry.is_file():
+                relative_str = entry.relative_to(root_path).as_posix()
+                if spec and spec.match_file(relative_str):
+                    continue
+                if not is_binary(str(entry)):
+                    files_to_process.append(relative_str)
+    else:
+        # Recursive: collect all files
+        def walk(current: Path) -> None:
+            for entry in sorted(current.iterdir()):
+                relative_path = entry.relative_to(root_path)
+                relative_str = relative_path.as_posix()
+                if spec:
+                    if entry.is_dir():
+                        if spec.match_file(f"{relative_str}/") or spec.match_file(relative_str):
+                            continue
+                    else:
+                        if spec.match_file(relative_str):
+                            continue
+                if entry.is_dir():
+                    walk(entry)
+                else:
+                    if not is_binary(str(entry)):
+                        files_to_process.append(relative_str)
+
+        walk(root_path)
+
+    return sorted(files_to_process)
 
 
-def get_tree(paths: list[Path | str]) -> str:
-    """Display formatted directory tree from list of file paths.
+def get_tree(
+    root: str | Path,
+    *,
+    recursive: bool = True,
+    ignore_patterns: Sequence[str] | None = None,
+    use_default_ignore: bool = True,
+    respect_gitignore: bool = True,
+) -> str:
+    """Display formatted directory tree from a root directory.
 
     Args:
-        paths: List of file paths
+        root: Root directory path
+        recursive: Recursively traverse directories (default True)
+        ignore_patterns: Additional gitignore-style patterns to ignore
+        use_default_ignore: Apply built-in ignore patterns (node_modules, .git, etc.)
+        respect_gitignore: Respect .gitignore file in root when True
 
     Returns:
         Formatted tree representation
+
+    Raises:
+        FileNotFoundError: If root does not exist
+        NotADirectoryError: If root is not a directory
     """
-    path_strs = [str(p) for p in paths]
-    return tree_as_str(path_strs)
+    files = find_files(
+        root,
+        recursive=recursive,
+        ignore_patterns=ignore_patterns,
+        use_default_ignore=use_default_ignore,
+        respect_gitignore=respect_gitignore,
+    )
+    return tree_as_str(files)

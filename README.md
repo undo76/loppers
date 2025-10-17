@@ -76,22 +76,25 @@ skeleton = get_skeleton("src/main.py", add_header=True)
 - `FileNotFoundError` - If file doesn't exist
 - `ValueError` - If file language is unsupported
 
-### 3. `find_files(paths: list[str], *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True) -> list[Path]`
+### 3. `find_files(root: str | Path, *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True) -> list[str]`
 
-Collect all non-binary text files from given paths/directories.
+Collect all non-binary text files from a root directory.
 
 ```python
 from loppers import find_files
 
-# Find all text files in src/ and tests/ recursively
-files = find_files(["src/", "tests/"])
+# Find all text files in src/ recursively (default)
+files = find_files("src/")
+
+# Returns file paths relative to root:
+# ['main.py', 'utils.py', 'config.yaml', 'README.md']
 
 # Non-recursive
-files = find_files(["src/"], recursive=False)
+files = find_files("src/", recursive=False)
 
 # Custom ignore patterns (gitignore syntax)
 files = find_files(
-    ["src/"],
+    "src/",
     ignore_patterns=["*.test.py", "venv/"],
     use_default_ignore=True,  # Still applies built-in patterns
     respect_gitignore=True,   # Still respects .gitignore
@@ -99,33 +102,40 @@ files = find_files(
 ```
 
 **Features:**
+- Takes single root directory (not multiple paths)
+- Returns file paths relative to root
 - Automatically excludes binary files (images, archives, etc.)
 - Respects `.gitignore` by default
 - Supports custom gitignore-style ignore patterns
 - Built-in patterns exclude node_modules, .git, __pycache__, build artifacts, etc.
 - Works with ALL non-binary text files (code, markdown, JSON, YAML, etc.)
 
-### 4. `get_tree(paths: list[str | Path]) -> str`
+### 4. `get_tree(root: str | Path, *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True) -> str`
 
-Display formatted directory tree from list of file paths.
+Display formatted directory tree from a root directory.
 
 ```python
-from loppers import get_tree, find_files
+from loppers import get_tree
 
-files = find_files(["src/"])
-tree = get_tree(files)
+# Display tree of src/ directory recursively
+tree = get_tree("src/")
 print(tree)
+
+# Non-recursive tree
+tree = get_tree("src/", recursive=False)
+
+# With custom ignore patterns
+tree = get_tree("src/", ignore_patterns=["*.test.py"])
 ```
 
 Output:
 ```
 .
-├─ src/
-│  ├─ main.py
-│  ├─ utils.py
-│  └─ config.yaml
-└─ tests/
-   └─ test_main.py
+└─ main.py
+   ├─ utils.py
+   ├─ config.yaml
+   └─ models/
+      └─ user.py
 ```
 
 ### Utility Function
@@ -174,7 +184,7 @@ loppers extract file.py -v
 
 ### 2. `concatenate` - Concatenate files with optional skeleton extraction
 
-Process multiple files/directories with automatic skeleton extraction:
+Process root directory with automatic skeleton extraction:
 
 ```bash
 # Recursive (default)
@@ -184,7 +194,7 @@ loppers concatenate src/
 loppers concatenate --no-recursive src/
 
 # Save to file
-loppers concatenate src/ tests/ -o combined.txt
+loppers concatenate src/ -o combined.txt
 
 # Verbose with progress
 loppers concatenate -v src/
@@ -203,14 +213,15 @@ loppers concatenate --no-gitignore src/
 ```
 
 **Features:**
+- Processes a single root directory (paths relative to root)
 - Includes ALL non-binary text files (code, markdown, JSON, YAML, etc.)
 - Automatically extracts skeletons for supported code files
 - Includes original content for unsupported file types (graceful degradation)
-- Each file prefixed with `--- filepath` header
+- Each file prefixed with `--- filepath` header (relative path)
 - Verbose mode shows extraction status for each file
 
 **Options:**
-- `paths` - Files/directories to process (required)
+- `root` - Root directory to process (required)
 - `-o, --output` - Output file (default: stdout)
 - `--no-extract` - Include original files without extraction
 - `-I, --ignore-pattern` - Add custom ignore pattern (gitignore syntax, can be used multiple times)
@@ -224,7 +235,7 @@ loppers concatenate --no-gitignore src/
 Display a formatted tree of all discovered files:
 
 ```bash
-# Recursive tree
+# Recursive tree (default)
 loppers tree src/
 
 # Non-recursive
@@ -238,7 +249,7 @@ loppers tree -I "*.test.py" src/
 ```
 
 **Options:**
-- `paths` - Directories to process (required)
+- `root` - Root directory to process (required)
 - `-o, --output` - Output file (default: stdout)
 - `-I, --ignore-pattern` - Add custom ignore pattern
 - `--no-default-ignore` - Disable built-in ignore patterns
@@ -248,17 +259,14 @@ loppers tree -I "*.test.py" src/
 
 ### 4. `files` - List all discovered files
 
-Print one discovered file per line:
+Print one discovered file per line (relative to root):
 
 ```bash
-# List all files recursively
+# List all files recursively (default)
 loppers files src/
 
 # Save list to file
 loppers files src/ -o file_list.txt
-
-# Multiple directories
-loppers files src/ tests/ docs/
 
 # Non-recursive
 loppers files --no-recursive src/
@@ -268,7 +276,7 @@ loppers files -I "*.md" src/
 ```
 
 **Options:**
-- `paths` - Directories/files to process (required)
+- `root` - Root directory to process (required)
 - `-o, --output` - Output file (default: stdout)
 - `-I, --ignore-pattern` - Add custom ignore pattern
 - `--no-default-ignore` - Disable built-in ignore patterns

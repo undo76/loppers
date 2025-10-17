@@ -491,14 +491,13 @@ class TestFindFilesWithMixedTypes(unittest.TestCase):
             (tmppath / "script.py").write_text("def hello():\n    pass\n")
 
             # Find files
-            files = find_files([tmppath], recursive=False)
-            file_names = {f.name for f in files}
+            files = find_files(tmppath, recursive=False)
 
             # All text files should be included
-            self.assertIn("readme.md", file_names)
-            self.assertIn("config.json", file_names)
-            self.assertIn("data.yaml", file_names)
-            self.assertIn("script.py", file_names)
+            self.assertIn("readme.md", files)
+            self.assertIn("config.json", files)
+            self.assertIn("data.yaml", files)
+            self.assertIn("script.py", files)
 
     def test_find_files_excludes_binary_files(self) -> None:
         """Test that find_files excludes binary files."""
@@ -509,11 +508,10 @@ class TestFindFilesWithMixedTypes(unittest.TestCase):
             (tmppath / "text.txt").write_text("text content\n")
             (tmppath / "binary.bin").write_bytes(b"\x00\x01\x02\x03")
 
-            files = find_files([tmppath], recursive=False)
-            file_names = {f.name for f in files}
+            files = find_files(tmppath, recursive=False)
 
-            self.assertIn("text.txt", file_names)
-            self.assertNotIn("binary.bin", file_names)
+            self.assertIn("text.txt", files)
+            self.assertNotIn("binary.bin", files)
 
 
 class TestMixedFileTypes(unittest.TestCase):
@@ -585,16 +583,15 @@ class TestIgnorePatternsWithMixedFiles(unittest.TestCase):
             (tmppath / "main.js").write_text("console.log('hi');\n")
 
             files = find_files(
-                [tmppath],
+                tmppath,
                 recursive=True,
                 use_default_ignore=True,
             )
-            file_names = {f.name for f in files}
 
             # Files in node_modules should be excluded
-            self.assertIn("main.js", file_names)
-            self.assertNotIn("package.json", file_names)
-            self.assertNotIn("module.js", file_names)
+            self.assertIn("main.js", files)
+            self.assertNotIn("node_modules/package.json", files)
+            self.assertNotIn("node_modules/module.js", files)
 
 
 if __name__ == "__main__":

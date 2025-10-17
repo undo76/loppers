@@ -20,11 +20,10 @@ def get_app_version() -> str:
 
 
 def add_shared_args(parser: argparse.ArgumentParser) -> None:
-    """Add shared arguments for path-based commands."""
+    """Add shared arguments for directory-based commands."""
     parser.add_argument(
-        "paths",
-        nargs="+",
-        help="Files and/or directories to process",
+        "root",
+        help="Root directory to process",
     )
 
     parser.add_argument(
@@ -120,10 +119,12 @@ def cmd_extract(args: argparse.Namespace) -> None:
 
 def cmd_concatenate(args: argparse.Namespace) -> None:
     """Concatenate files with optional skeleton extraction."""
+    root_path = Path(args.root)
+
     # Find files
     try:
         files = find_files(
-            args.paths,
+            root_path,
             recursive=not args.no_recursive,
             ignore_patterns=args.ignore_patterns,
             use_default_ignore=not args.no_default_ignore,
@@ -139,40 +140,41 @@ def cmd_concatenate(args: argparse.Namespace) -> None:
 
     # Concatenate files with optional skeleton extraction
     results: list[str] = []
-    for file_path in files:
+    for relative_file_path in files:
+        full_file_path = root_path / relative_file_path
         try:
             is_extracted = False
             if args.no_extract:
                 # Include original file
-                content = file_path.read_text(encoding="utf-8")
+                content = full_file_path.read_text(encoding="utf-8")
             else:
                 # Try to extract skeleton, fall back to original for unsupported types
                 try:
-                    content = get_skeleton(file_path, add_header=False)
+                    content = get_skeleton(full_file_path, add_header=False)
                     is_extracted = True
                 except ValueError as e:
                     # File type not supported for extraction, include as-is
                     if "Unsupported file type" in str(e):
-                        content = file_path.read_text(encoding="utf-8")
+                        content = full_file_path.read_text(encoding="utf-8")
                         is_extracted = False
                     else:
                         raise
 
-            # Add header
-            header = f"--- {file_path}\n"
+            # Add header with relative path
+            header = f"--- {relative_file_path}\n"
             results.append(header + content + "\n")
 
             if args.verbose:
                 if args.no_extract:
-                    print(f"ℹ Included {file_path.name}", file=sys.stderr)
+                    print(f"ℹ Included {relative_file_path}", file=sys.stderr)
                 elif is_extracted:
-                    print(f"✓ Extracted skeleton from {file_path.name}", file=sys.stderr)
+                    print(f"✓ Extracted skeleton from {relative_file_path}", file=sys.stderr)
                 else:
-                    print(f"ℹ Included {file_path.name} (unsupported type, no extraction)",
+                    print(f"ℹ Included {relative_file_path} (unsupported type, no extraction)",
                           file=sys.stderr)
         except Exception as e:
             if args.verbose:
-                print(f"⚠ Could not process {file_path}: {e}", file=sys.stderr)
+                print(f"⚠ Could not process {relative_file_path}: {e}", file=sys.stderr)
             continue
 
     result = "\n".join(results).rstrip()
@@ -188,10 +190,9 @@ def cmd_concatenate(args: argparse.Namespace) -> None:
 
 def cmd_tree(args: argparse.Namespace) -> None:
     """Show directory tree of discovered files."""
-    # Find files
     try:
-        files = find_files(
-            args.paths,
+        tree_output = get_tree(
+            args.root,
             recursive=not args.no_recursive,
             ignore_patterns=args.ignore_patterns,
             use_default_ignore=not args.no_default_ignore,
@@ -201,12 +202,9 @@ def cmd_tree(args: argparse.Namespace) -> None:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
-    if not files:
+    if not tree_output:
         print("No files found", file=sys.stderr)
         return
-
-    # Generate tree
-    tree_output = get_tree([str(f) for f in files])
 
     # Output result
     if args.output:
@@ -219,10 +217,9 @@ def cmd_tree(args: argparse.Namespace) -> None:
 
 def cmd_files(args: argparse.Namespace) -> None:
     """List all discovered files."""
-    # Find files
     try:
         files = find_files(
-            args.paths,
+            args.root,
             recursive=not args.no_recursive,
             ignore_patterns=args.ignore_patterns,
             use_default_ignore=not args.no_default_ignore,
@@ -236,9 +233,8 @@ def cmd_files(args: argparse.Namespace) -> None:
         print("No files found", file=sys.stderr)
         return
 
-    # Format output
-    output_lines = [str(f) for f in files]
-    result = "\n".join(output_lines)
+    # Format output (files are already relative to root)
+    result = "\n".join(files)
 
     # Output result
     if args.output:
