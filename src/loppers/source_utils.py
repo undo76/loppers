@@ -14,8 +14,13 @@ from loppers.loppers import SkeletonExtractor
 Tree = defaultdict[str, "Tree"]
 
 
-def tree_as_str(paths: list[str]) -> str:
-    """Return a formatted tree-like string representation of the given paths."""
+def tree_as_str(paths: list[str], *, collapse_single_dirs: bool = False) -> str:
+    """Return a formatted tree-like string representation of the given paths.
+
+    Args:
+        paths: List of file paths
+        collapse_single_dirs: Collapse directories with single children (e.g., java/com/example)
+    """
 
     def build_tree(paths: list[str]) -> Tree:
         """Build a nested dict representing the directory tree from a list of file paths."""
@@ -37,10 +42,29 @@ def tree_as_str(paths: list[str]) -> str:
         entries = sorted(node.keys(), key=lambda n: (not node[n], n.lower()))  # dirs first
         for i, name in enumerate(entries):
             connector = "└─ " if i == len(entries) - 1 else "├─ "
-            lines.append(f"{prefix}{connector}{name}")
-            if node[name]:
+
+            # Collect collapsed path if enabled
+            display_name = name
+            current_node = node[name]
+
+            if collapse_single_dirs:
+                # Keep collapsing while there's a single child that's a directory
+                while current_node and len(current_node) == 1:
+                    child_name = list(current_node.keys())[0]
+                    child_node = current_node[child_name]
+
+                    if not child_node:
+                        # Child is a file (empty dict), stop collapsing
+                        break
+
+                    # Child is a directory, collapse it into current path
+                    display_name = f"{display_name}/{child_name}"
+                    current_node = child_node
+
+            lines.append(f"{prefix}{connector}{display_name}")
+            if current_node:
                 extension = "   " if i == len(entries) - 1 else "│  "
-                lines.extend(render_tree(node[name], prefix + extension))
+                lines.extend(render_tree(current_node, prefix + extension))
         return lines
 
     tree = build_tree(paths)
@@ -272,6 +296,7 @@ def get_tree(
     ignore_patterns: Sequence[str] | None = None,
     use_default_ignore: bool = True,
     respect_gitignore: bool = True,
+    collapse_single_dirs: bool = False,
 ) -> str:
     """Display formatted directory tree from a root directory.
 
@@ -281,6 +306,7 @@ def get_tree(
         ignore_patterns: Additional gitignore-style patterns to ignore
         use_default_ignore: Apply built-in ignore patterns (node_modules, .git, etc.)
         respect_gitignore: Respect .gitignore file in root when True
+        collapse_single_dirs: Collapse directories with single children (default False)
 
     Returns:
         Formatted tree representation
@@ -296,4 +322,4 @@ def get_tree(
         use_default_ignore=use_default_ignore,
         respect_gitignore=respect_gitignore,
     )
-    return tree_as_str(files)
+    return tree_as_str(files, collapse_single_dirs=collapse_single_dirs)

@@ -53,6 +53,12 @@ def add_shared_args(parser: argparse.ArgumentParser) -> None:
     )
 
     parser.add_argument(
+        "--collapse-single-dirs",
+        action="store_true",
+        help="Collapse directories with single children (e.g., main/java/com/example)",
+    )
+
+    parser.add_argument(
         "-o",
         "--output",
         type=str,
@@ -197,6 +203,7 @@ def cmd_tree(args: argparse.Namespace) -> None:
             ignore_patterns=args.ignore_patterns,
             use_default_ignore=not args.no_default_ignore,
             respect_gitignore=not args.no_gitignore,
+            collapse_single_dirs=args.collapse_single_dirs,
         )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -328,6 +335,7 @@ Examples:
   loppers tree src/                              # Recursive tree
   loppers tree --no-recursive src/               # Non-recursive tree
   loppers tree -I "*.test.py" src/               # With custom ignore
+  loppers tree --collapse-single-dirs src/       # Collapse deep packages (e.g., main/java/com/example)
         """,
     )
     add_shared_args(tree_parser)

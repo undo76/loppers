@@ -110,7 +110,7 @@ files = find_files(
 - Built-in patterns exclude node_modules, .git, __pycache__, build artifacts, etc.
 - Works with ALL non-binary text files (code, markdown, JSON, YAML, etc.)
 
-### 4. `get_tree(root: str | Path, *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True) -> str`
+### 4. `get_tree(root: str | Path, *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True, collapse_single_dirs: bool = False) -> str`
 
 Display formatted directory tree from a root directory.
 
@@ -126,16 +126,18 @@ tree = get_tree("src/", recursive=False)
 
 # With custom ignore patterns
 tree = get_tree("src/", ignore_patterns=["*.test.py"])
+
+# Collapse deep single-child directories (useful for Java packages)
+tree = get_tree("src/", collapse_single_dirs=True)
 ```
 
-Output:
+Output (with `collapse_single_dirs=True`):
 ```
 .
-└─ main.py
-   ├─ utils.py
-   ├─ config.yaml
-   └─ models/
-      └─ user.py
+├─ main/java/com/example
+│  ├─ Source.java
+│  └─ Util.java
+└─ resources/config.yaml
 ```
 
 ### Utility Function
@@ -246,6 +248,9 @@ loppers tree src/ -o tree.txt
 
 # With ignore patterns
 loppers tree -I "*.test.py" src/
+
+# Collapse deep single-child directories (useful for Java packages)
+loppers tree --collapse-single-dirs src/
 ```
 
 **Options:**
@@ -255,7 +260,30 @@ loppers tree -I "*.test.py" src/
 - `--no-default-ignore` - Disable built-in ignore patterns
 - `--no-gitignore` - Don't respect .gitignore
 - `--no-recursive` - Non-recursive tree
+- `--collapse-single-dirs` - Collapse directories with single children (e.g., `java/com/example` becomes one line)
 - `-v, --verbose` - Print status to stderr
+
+**Collapse Example:**
+
+Without collapse:
+```
+.
+└─ src
+   └─ main
+      └─ java
+         └─ com
+            └─ example
+               ├─ Source.java
+               └─ Util.java
+```
+
+With `--collapse-single-dirs`:
+```
+.
+└─ src/main/java/com/example
+   ├─ Source.java
+   └─ Util.java
+```
 
 ### 4. `files` - List all discovered files
 
