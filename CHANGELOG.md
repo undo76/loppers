@@ -1,6 +1,16 @@
 # CHANGELOG
 
+## v1.3.2 (2025-10-17)
+
+### Fix
+
+* fix: Remove debug output ([`b288011`](https://github.com/undo76/loppers/commit/b288011b36a87074d0147bb5b7c16ed217e00197))
+
 ## v1.3.1 (2025-10-17)
+
+### Chore
+
+* chore(release): 1.3.1 ([`804cbef`](https://github.com/undo76/loppers/commit/804cbefe0a736350061a2c8047259ed723f7aeab))
 
 ### Documentation
 
