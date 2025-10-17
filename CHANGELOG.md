@@ -1,10 +1,67 @@
 # CHANGELOG
 
+## v2.1.0 (2025-10-17)
+
+### Feature
+
+* feat: Add collapse-single-dirs option to collapse deep package hierarchies
+
+Add new --collapse-single-dirs flag to tree command for collapsing directories
+with single children into compact paths (e.g., main/java/com/example).
+
+Useful for Java packages and other hierarchical naming schemes where directories
+have only a single child all the way down.
+
+Changes:
+- tree_as_str() now accepts collapse_single_dirs parameter
+- get_tree() API adds collapse_single_dirs parameter
+- CLI commands get --collapse-single-dirs flag
+- Updated README with examples and documentation
+
+Example:
+  Without: main/java/com/example/ (4 lines)
+  With:    main/java/com/example (1 line)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`2d0ba4f`](https://github.com/undo76/loppers/commit/2d0ba4f2fe801a0390e13b74a7022473e0f54168))
+
+### Refactor
+
+* refactor: Convert API from multiple paths to single root parameter
+
+Major API changes:
+- find_files(root) now takes single root directory, returns relative paths
+- get_tree(root) now takes single root directory with same options as find_files
+- CLI commands (concatenate, tree, files) now accept single root instead of multiple paths
+
+Benefits:
+- Simpler, more intuitive API with single root concept
+- Cleaner file paths relative to root (not absolute)
+- Consistent with typical CLI tools (find, ls, etc.)
+- File headers in concatenate output use relative paths
+
+Breaking Changes:
+- find_files() signature changed from list of paths to single root
+- get_tree() signature changed from list of file paths to root directory
+- CLI positional argument changed from &#34;paths&#34; to &#34;root&#34;
+- Return type of find_files() changed from list[Path] to list[str]
+
+All 31 tests updated and passing.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt; ([`dc75f20`](https://github.com/undo76/loppers/commit/dc75f2004c1bb48156b52106a601c698300a9825))
+
 ## v2.0.0 (2025-10-17)
 
 ### Breaking
 
 * feat!: Big refactoring ([`f58f778`](https://github.com/undo76/loppers/commit/f58f778d55f32b6e617b1c6a5e1b51bf9cf6540a))
+
+### Chore
+
+* chore(release): 2.0.0 ([`463c902`](https://github.com/undo76/loppers/commit/463c902b3c2bfdbae526f020a5352b70307750d8))
 
 ## v1.3.2 (2025-10-17)
 
