@@ -1,6 +1,20 @@
 # CHANGELOG
 
+## v1.3.1 (2025-10-17)
+
+### Documentation
+
+* docs: Add MIT license ([`81b26ee`](https://github.com/undo76/loppers/commit/81b26ee29d7ae25ea1fe40b4d2eba968e5937f9c))
+
+### Fix
+
+* fix: Use tsx language for .tsx ([`7bc72c9`](https://github.com/undo76/loppers/commit/7bc72c9f7e25b9d3d858b736d4db856c8be6a1c7))
+
 ## v1.3.0 (2025-10-16)
+
+### Chore
+
+* chore(release): 1.3.0 ([`734c69c`](https://github.com/undo76/loppers/commit/734c69cdd4d5813994c946d101468a528b48f3f2))
 
 ### Feature
 
