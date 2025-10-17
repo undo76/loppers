@@ -1,6 +1,16 @@
 # CHANGELOG
 
+## v2.0.0 (2025-10-17)
+
+### Breaking
+
+* feat!: Big refactoring ([`f58f778`](https://github.com/undo76/loppers/commit/f58f778d55f32b6e617b1c6a5e1b51bf9cf6540a))
+
 ## v1.3.2 (2025-10-17)
+
+### Chore
+
+* chore(release): 1.3.2 ([`0f355e3`](https://github.com/undo76/loppers/commit/0f355e3af3c48bcdf5c2ea2965ecead491da6923))
 
 ### Fix
 
