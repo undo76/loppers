@@ -6,16 +6,19 @@ Compatible with tree-sitter >= 0.25
 
 from __future__ import annotations
 
-from loppers.concatenator import collect_files, concatenate_files, is_binary_file
-from loppers.loppers import SkeletonExtractor, extract
-from loppers.mapping import EXTENSION_TO_LANGUAGE, get_language
+from loppers.extensions import EXTENSION_TO_LANGUAGE, get_language
+from loppers.source_utils import (
+    extract_skeleton,
+    find_files,
+    get_skeleton,
+    get_tree,
+)
 
 __all__ = [
-    "SkeletonExtractor",
-    "extract",
-    "concatenate_files",
-    "collect_files",
-    "is_binary_file",
+    "get_skeleton",
+    "find_files",
+    "get_tree",
+    "extract_skeleton",
     "EXTENSION_TO_LANGUAGE",
     "get_language",
 ]

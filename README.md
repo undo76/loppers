@@ -2,7 +2,7 @@
 
 **Extract source file skeletons using tree-sitter queries.**
 
-Removes function implementations while preserving structure, signatures, and docstrings. Supports 17 programming languages with a simple, fully-typed Python API.
+Removes function implementations while preserving structure, signatures, and docstrings. Supports 17 programming languages with a clean, fully-typed Python API and comprehensive CLI.
 
 **Requires: tree-sitter >= 0.25**
 
@@ -11,10 +11,11 @@ Removes function implementations while preserving structure, signatures, and doc
 - ✅ **17 Languages** - Python, JS/TS, Java, Kotlin, Go, Rust, C/C++, C#, Ruby, PHP, Swift, Lua, Scala, Groovy, Objective-C
 - ✅ **Smart Extraction** - Functions, methods, constructors, arrow functions, getters/setters
 - ✅ **Preserved Elements** - Signatures, class definitions, imports, docstrings, decorators
-- ✅ **File Operations** - Concatenate files/directories with binary detection
+- ✅ **All File Types** - Process any non-binary text files (code, markdown, JSON, YAML, etc.)
+- ✅ **Binary Detection** - Automatically skips binary files
+- ✅ **Ignore Patterns** - Built-in + custom .gitignore support
 - ✅ **Fully Typed** - Complete type hints throughout
 - ✅ **CLI & Library** - Use as command-line tool or Python library
-
 
 ## Quick Start
 
@@ -28,77 +29,252 @@ uv pip install loppers
 pip install loppers
 ```
 
-### Extract Code Skeleton (Python API)
+## Python API
+
+The public API consists of 4 core functions:
+
+### 1. `extract_skeleton(source: str, language: str) -> str`
+
+Extract skeleton from source code by language identifier.
 
 ```python
-from loppers import extract
+from loppers import extract_skeleton
 
-source = '''
+code = """
 def calculate(x: int, y: int) -> int:
-    """Calculate sum."""
+    '''Calculate sum.'''
     result = x + y
     return result
-'''
+"""
 
-skeleton = extract(source, "python")
+skeleton = extract_skeleton(code, "python")
 print(skeleton)
 ```
 
 Output:
 ```python
 def calculate(x: int, y: int) -> int:
-    """Calculate sum."""
+    '''Calculate sum.'''
 ```
 
-### Concatenate Files (Python API)
+### 2. `get_skeleton(file_path: Path | str, *, add_header: bool = False) -> str`
+
+Extract skeleton from a file by auto-detecting language from extension.
 
 ```python
-from loppers import concatenate_files
+from loppers import get_skeleton
 
-# Combine all text files with skeleton extraction
-result = concatenate_files(
-    ["src/", "tests/"],
-    recursive=True,
-    extract_skeletons=True,
-    verbose=True,
+skeleton = get_skeleton("src/main.py")
+print(skeleton)
+
+# With header showing file path
+skeleton = get_skeleton("src/main.py", add_header=True)
+# Output: "--- /path/to/src/main.py\n..."
+```
+
+**Raises:**
+- `FileNotFoundError` - If file doesn't exist
+- `ValueError` - If file language is unsupported
+
+### 3. `find_files(paths: list[str], *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True) -> list[Path]`
+
+Collect all non-binary text files from given paths/directories.
+
+```python
+from loppers import find_files
+
+# Find all text files in src/ and tests/ recursively
+files = find_files(["src/", "tests/"])
+
+# Non-recursive
+files = find_files(["src/"], recursive=False)
+
+# Custom ignore patterns (gitignore syntax)
+files = find_files(
+    ["src/"],
+    ignore_patterns=["*.test.py", "venv/"],
+    use_default_ignore=True,  # Still applies built-in patterns
+    respect_gitignore=True,   # Still respects .gitignore
 )
-print(result)
 ```
 
-### Command Line Usage
+**Features:**
+- Automatically excludes binary files (images, archives, etc.)
+- Respects `.gitignore` by default
+- Supports custom gitignore-style ignore patterns
+- Built-in patterns exclude node_modules, .git, __pycache__, build artifacts, etc.
+- Works with ALL non-binary text files (code, markdown, JSON, YAML, etc.)
 
-```bash
-# Extract single file
-loppers myfile.py
+### 4. `get_tree(paths: list[str | Path]) -> str`
 
-# Process directory recursively
-loppers -r src/ -o skeletons.txt
+Display formatted directory tree from list of file paths.
 
-# Include original files (no extraction)
-loppers -r src/ --no-extract
+```python
+from loppers import get_tree, find_files
 
-# Show progress
-loppers -v -r .
+files = find_files(["src/"])
+tree = get_tree(files)
+print(tree)
 ```
 
-**Common CLI Examples:**
+Output:
+```
+.
+├─ src/
+│  ├─ main.py
+│  ├─ utils.py
+│  └─ config.yaml
+└─ tests/
+   └─ test_main.py
+```
+
+### Utility Function
+
+**`get_language(extension: str) -> str | None`** - Get language identifier from file extension.
+
+```python
+from loppers import get_language
+
+get_language(".py")    # "python"
+get_language(".js")    # "javascript"
+get_language(".json")  # None (no extraction for data files)
+```
+
+## Command-Line Interface
+
+Loppers provides 4 subcommands for common tasks.
+
+### Basic Usage
+
 ```bash
-# Multiple files
-loppers file1.py file2.js file3.java
+loppers --version
+loppers --help
+```
 
-# Directory traversal
-loppers src/                  # Non-recursive
-loppers -r src/              # Recursive
+### 1. `extract` - Extract skeleton from file or stdin
 
-# Mix files and directories
-loppers -r src/ tests/ docs/
+Extract a single file's skeleton:
+```bash
+# From file
+loppers extract file.py
+loppers extract file.py -o skeleton.py
 
-# Save to file
-loppers -r . -o combined.txt
+# From stdin with explicit language
+echo 'def foo(): pass' | loppers extract -l python
 
 # Verbose output
-loppers -v -r src/
+loppers extract file.py -v
 ```
+
+**Options:**
+- `FILE` - File to extract (omit for stdin)
+- `-l, --language` - Language identifier (auto-detected from extension if FILE provided, required for stdin)
+- `-o, --output` - Output file (default: stdout)
+- `-v, --verbose` - Print status to stderr
+
+### 2. `concatenate` - Concatenate files with optional skeleton extraction
+
+Process multiple files/directories with automatic skeleton extraction:
+
+```bash
+# Recursive (default)
+loppers concatenate src/
+
+# Non-recursive
+loppers concatenate --no-recursive src/
+
+# Save to file
+loppers concatenate src/ tests/ -o combined.txt
+
+# Verbose with progress
+loppers concatenate -v src/
+
+# Include original files without extraction
+loppers concatenate --no-extract src/
+
+# Custom ignore patterns
+loppers concatenate -I "*.test.py" -I "venv/" src/
+
+# Disable default ignores
+loppers concatenate --no-default-ignore src/
+
+# Don't respect .gitignore
+loppers concatenate --no-gitignore src/
+```
+
+**Features:**
+- Includes ALL non-binary text files (code, markdown, JSON, YAML, etc.)
+- Automatically extracts skeletons for supported code files
+- Includes original content for unsupported file types (graceful degradation)
+- Each file prefixed with `--- filepath` header
+- Verbose mode shows extraction status for each file
+
+**Options:**
+- `paths` - Files/directories to process (required)
+- `-o, --output` - Output file (default: stdout)
+- `--no-extract` - Include original files without extraction
+- `-I, --ignore-pattern` - Add custom ignore pattern (gitignore syntax, can be used multiple times)
+- `--no-default-ignore` - Disable built-in ignore patterns
+- `--no-gitignore` - Don't respect .gitignore
+- `--no-recursive` - Don't recursively traverse directories
+- `-v, --verbose` - Print status to stderr
+
+### 3. `tree` - Show directory tree of discovered files
+
+Display a formatted tree of all discovered files:
+
+```bash
+# Recursive tree
+loppers tree src/
+
+# Non-recursive
+loppers tree --no-recursive src/
+
+# Save tree to file
+loppers tree src/ -o tree.txt
+
+# With ignore patterns
+loppers tree -I "*.test.py" src/
+```
+
+**Options:**
+- `paths` - Directories to process (required)
+- `-o, --output` - Output file (default: stdout)
+- `-I, --ignore-pattern` - Add custom ignore pattern
+- `--no-default-ignore` - Disable built-in ignore patterns
+- `--no-gitignore` - Don't respect .gitignore
+- `--no-recursive` - Non-recursive tree
+- `-v, --verbose` - Print status to stderr
+
+### 4. `files` - List all discovered files
+
+Print one discovered file per line:
+
+```bash
+# List all files recursively
+loppers files src/
+
+# Save list to file
+loppers files src/ -o file_list.txt
+
+# Multiple directories
+loppers files src/ tests/ docs/
+
+# Non-recursive
+loppers files --no-recursive src/
+
+# With custom ignores
+loppers files -I "*.md" src/
+```
+
+**Options:**
+- `paths` - Directories/files to process (required)
+- `-o, --output` - Output file (default: stdout)
+- `-I, --ignore-pattern` - Add custom ignore pattern
+- `--no-default-ignore` - Disable built-in ignore patterns
+- `--no-gitignore` - Don't respect .gitignore
+- `--no-recursive` - Non-recursive listing
+- `-v, --verbose` - Print status to stderr
 
 ## Examples: Before and After
 
@@ -245,102 +421,6 @@ public class UserService {
 - Python lambdas - no body to remove
 - Some edge cases with getters/setters in JavaScript/TypeScript
 
-## API Reference
-
-### Skeleton Extraction
-
-#### `extract(source_code: str, language: str) -> str`
-
-Extract skeleton from source code.
-
-**Example:**
-```python
-from loppers import extract
-
-code = "def hello(): print('hi')"
-skeleton = extract(code, "python")  # Returns: "def hello():"
-```
-
-#### `SkeletonExtractor(language: str)`
-
-Create a language-specific extractor for reuse.
-
-**Example:**
-```python
-from loppers import SkeletonExtractor
-
-extractor = SkeletonExtractor("python")
-skeleton1 = extractor.extract(code1)
-skeleton2 = extractor.extract(code2)
-```
-
-### File Operations
-
-#### `concatenate_files(file_paths, recursive=False, verbose=False, extract_skeletons=True) -> str`
-
-Concatenate files with optional skeleton extraction.
-
-**Args:**
-- `file_paths` - List of file and/or directory paths
-- `recursive` - Recursively traverse directories (default: False)
-- `verbose` - Print progress to stderr (default: False)
-- `extract_skeletons` - Extract code skeletons (default: True)
-
-**Returns:** Concatenated content with `---` headers separating files
-
-**Example:**
-```python
-from loppers import concatenate_files
-
-result = concatenate_files(
-    ["src/", "tests/"],
-    recursive=True,
-    extract_skeletons=True,
-)
-# Automatically skips binary files
-# Extracts skeletons for supported languages
-# Includes original content for unsupported types
-```
-
-#### `collect_files(paths, recursive=False, verbose=False, include_all_text_files=True) -> list[Path]`
-
-Collect text files from paths, excluding binary files.
-
-**Returns:** Sorted list of file paths
-
-#### `is_binary_file(file_path: Path) -> bool`
-
-Detect if a file is binary.
-
-Uses the `binaryornot` library which checks:
-- Known binary file extensions
-- Null bytes in content
-- UTF-8 decoding success
-
-**Example:**
-```python
-from loppers import is_binary_file
-from pathlib import Path
-
-if not is_binary_file(Path("image.jpg")):
-    process_as_text()
-```
-
-### Utility Functions
-
-#### `get_language(extension: str) -> str | None`
-
-Get language identifier from file extension.
-
-**Example:**
-```python
-from loppers import get_language
-
-get_language(".py")   # Returns: "python"
-get_language(".java") # Returns: "java"
-get_language(".txt")  # Returns: None
-```
-
 ## How It Works
 
 Loppers uses **tree-sitter** queries to parse source code into Abstract Syntax Trees (AST) and intelligently remove function/method bodies while preserving:
@@ -353,20 +433,7 @@ Loppers uses **tree-sitter** queries to parse source code into Abstract Syntax T
 - Decorators
 - Type hints
 
-**Language-Specific Queries:**
-
-Each language has a custom tree-sitter query pattern:
-
-```python
-# Python: Remove function body but keep docstrings
-"(function_definition body: (block) @body)"
-
-# JavaScript: Handle multiple function types
-"[(function_declaration body: ...) (arrow_function body: ...) ...]"
-
-# Kotlin: Extract functions and property getters/setters
-"[(function_declaration (function_body) @body) (getter ...) (setter ...)]"
-```
+Each language has custom tree-sitter query patterns that capture function/method body nodes, which are then removed line-by-line.
 
 ## Development
 
@@ -374,7 +441,7 @@ Each language has a custom tree-sitter query pattern:
 
 ```bash
 # Install with dev dependencies
-uv sync --extra dev
+uv sync
 ```
 
 ### Running Tests
@@ -390,7 +457,7 @@ uv run pytest -v
 uv run pytest --cov=loppers --cov-report=html
 
 # Specific test
-uv run pytest tests/test_loppers.py::TestSkeletonExtractor::test_python_extraction
+uv run pytest tests/test_loppers.py::test_python_extraction
 ```
 
 ### Code Quality
@@ -402,40 +469,11 @@ uv run ruff check . --fix
 # Format
 uv run ruff format .
 
-# All checks at once
+# All checks
 uv run ruff check . --fix && uv run ruff format .
 ```
 
-### Publishing to PyPI
-
-This project uses [Python Semantic Release](https://python-semantic-release.readthedocs.io/) with conventional commits.
-
-**Commit message format:**
-- `feat:` - New feature (bumps minor version)
-- `fix:` - Bug fix (bumps patch version)
-- `BREAKING CHANGE:` - Major version bump
-- `docs:`, `chore:`, `refactor:` - No version bump
-
-**Automated release:**
-```bash
-# Push to main with conventional commit messages
-# GitHub Actions will automatically:
-# 1. Analyze commits
-# 2. Bump version
-# 3. Build distributions
-# 4. Publish to PyPI
-```
-
-**Manual publishing:**
-```bash
-# Build locally
-uv run python -m build
-
-# View distributions
-ls -lh dist/
-```
-
-## Adding New Languages
+### Adding New Languages
 
 To add support for a new language:
 
@@ -449,7 +487,7 @@ To add support for a new language:
    )
    ```
 
-3. **Add file extensions** to `src/loppers/mapping.py`:
+3. **Add file extensions** to `src/loppers/extensions.py`:
    ```python
    EXTENSION_TO_LANGUAGE = {
        ".ml": "mylang",
@@ -461,33 +499,30 @@ To add support for a new language:
    ```python
    def test_mylang_extraction(self):
        code = "fun hello() { print('hi') }"
-       skeleton = extract(code, "mylang")
-       self.assertIn("fun hello()", skeleton)
-       self.assertNotIn("print", skeleton)
+       skeleton = extract_skeleton(code, "mylang")
+       assert "fun hello()" in skeleton
+       assert "print" not in skeleton
    ```
 
-5. **Add example file** in `examples/sample.ml` showcasing language features
+5. **Run tests** to verify everything works
 
 ## Project Structure
 
 ```
 loppers/
 ├── src/loppers/
-│   ├── __init__.py              # Public API exports
-│   ├── loppers.py               # Core extraction logic
-│   ├── concatenator.py          # File concatenation
-│   ├── mapping.py               # Language mapping
-│   └── cli.py                   # Command-line interface
+│   ├── __init__.py              # Public API: extract_skeleton, get_skeleton, find_files, get_tree
+│   ├── loppers.py               # Core extraction logic with SkeletonExtractor class
+│   ├── source_utils.py          # Convenience API and file operations
+│   ├── extensions.py            # Language extension mapping
+│   ├── ignore_patterns.py       # Default ignore patterns
+│   ├── mapping.py               # Backwards compatibility re-exports
+│   └── cli.py                   # Command-line interface (4 subcommands)
 ├── tests/
-│   └── test_loppers.py          # Unit tests (24 tests)
-├── examples/
-│   ├── sample.py                # Python examples
-│   ├── sample.kt                # Kotlin examples
-│   └── ...                       # Other language samples
+│   └── test_loppers.py          # Unit tests (31 tests)
 ├── pyproject.toml               # Project configuration
-├── README.md                    # Main documentation (this file)
-├── CHANGELOG.md                 # Release history
-└── CLAUDE.md                    # Claude Code development guide
+├── README.md                    # This file
+└── CLAUDE.md                    # Development guide for Claude Code
 ```
 
 ## Dependencies
@@ -496,19 +531,20 @@ loppers/
 - `tree-sitter>=0.25.0` - AST parsing library
 - `tree-sitter-language-pack>=0.10.0` - Language grammars
 - `binaryornot>=0.4.4` - Binary file detection
+- `pathspec>=0.9.0` - .gitignore pattern matching
 
 **Development:**
 - `pytest>=7.0.0` - Testing framework
+- `pytest-cov>=4.0.0` - Coverage reporting
 - `ruff>=0.1.0` - Linting and formatting
-- `python-semantic-release>=8.0.0` - Release automation
 
 ## References
 
 - [tree-sitter Documentation](https://tree-sitter.github.io/)
 - [tree-sitter-language-pack](https://github.com/grantjenks/py-tree-sitter-language-pack)
 - [binaryornot Library](https://github.com/audreyr/binaryornot)
+- [pathspec Library](https://github.com/cpburnz/python-pathspec)
 - [uv Package Manager](https://github.com/astral-sh/uv)
-- [Conventional Commits](https://www.conventionalcommits.org/)
 
 ## License
 

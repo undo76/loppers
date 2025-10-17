@@ -6,7 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from loppers import extract, SkeletonExtractor, is_binary_file, concatenate_files
+from loppers import extract_skeleton, find_files, get_skeleton
+from loppers.loppers import SkeletonExtractor
+from binaryornot.check import is_binary
 
 
 class TestSkeletonExtractor(unittest.TestCase):
@@ -20,7 +22,7 @@ def hello(name):
     print(f"Hello {name}")
     return True
 '''
-        skeleton: str = extract(code, "python")
+        skeleton: str = extract_skeleton(code, "python")
         self.assertIn("def hello", skeleton)
         self.assertIn("Greet someone", skeleton)
         self.assertNotIn("print", skeleton)
@@ -37,7 +39,7 @@ def process(
         result[item] = process_item(item)
     return result
 '''
-        skeleton: str = extract(code, "python")
+        skeleton: str = extract_skeleton(code, "python")
         self.assertIn("def process", skeleton)
         self.assertNotIn("result = {}", skeleton)
 
@@ -90,7 +92,7 @@ const greet = (name) => {
 
 const concise = (x) => x * 2;
 '''
-        skeleton: str = extract(code, "javascript")
+        skeleton: str = extract_skeleton(code, "javascript")
         self.assertIn("const add = (a, b) =>", skeleton)
         self.assertIn("const greet = (name) =>", skeleton)
         self.assertNotIn("const result", skeleton)
@@ -112,7 +114,7 @@ public class User {
     }
 }
 '''
-        skeleton: str = extract(code, "java")
+        skeleton: str = extract_skeleton(code, "java")
         self.assertIn("public User(String name)", skeleton)
         self.assertIn("private void validate()", skeleton)
         self.assertNotIn("this.name = name", skeleton)
@@ -135,7 +137,7 @@ class MyClass:
         """Private setup method."""
         self.ready = True
 '''
-        skeleton: str = extract(code, "python")
+        skeleton: str = extract_skeleton(code, "python")
         self.assertIn("def __init__", skeleton)
         self.assertIn('"""Initialize."""', skeleton)
         self.assertIn("def __str__", skeleton)
@@ -154,7 +156,7 @@ public class Example {
     }
 }
 '''
-        skeleton: str = extract(code, "java")
+        skeleton: str = extract_skeleton(code, "java")
         self.assertIn("public void test()", skeleton)
         self.assertNotIn("System.out.println", skeleton)
 
@@ -175,7 +177,7 @@ public class User {
     }
 }
 '''
-        skeleton: str = extract(code, "csharp")
+        skeleton: str = extract_skeleton(code, "csharp")
         self.assertIn("public void Process()", skeleton)
         self.assertNotIn("return x * 2", skeleton)
 
@@ -192,7 +194,7 @@ fn main() {
     };
 }
 '''
-        skeleton: str = extract(code, "rust")
+        skeleton: str = extract_skeleton(code, "rust")
         self.assertIn("fn main()", skeleton)
         # Closures should have bodies removed
 
@@ -207,7 +209,7 @@ void process() {
         [](int a, int b) { return a > b; });
 }
 '''
-        skeleton: str = extract(code, "cpp")
+        skeleton: str = extract_skeleton(code, "cpp")
         self.assertIn("void process()", skeleton)
 
     def test_ruby_methods_and_blocks(self) -> None:
@@ -230,7 +232,7 @@ class Calculator
   end
 end
 '''
-        skeleton: str = extract(code, "ruby")
+        skeleton: str = extract_skeleton(code, "ruby")
         self.assertIn("def add", skeleton)
         self.assertIn("def self.multiply", skeleton)
         self.assertNotIn("result = a + b", skeleton)
@@ -251,7 +253,7 @@ class Service {
     }
 }
 '''
-        skeleton: str = extract(code, "php")
+        skeleton: str = extract_skeleton(code, "php")
         self.assertIn("public function process", skeleton)
         self.assertNotIn("return $item * 2", skeleton)
 
@@ -272,7 +274,7 @@ class Greeter {
     }
 }
 '''
-        skeleton: str = extract(code, "swift")
+        skeleton: str = extract_skeleton(code, "swift")
         self.assertIn("func greet(name: String) -> String", skeleton)
         self.assertIn("func sayHello()", skeleton)
         self.assertIn("func sayGoodbye(name: String)", skeleton)
@@ -292,7 +294,7 @@ function sayGoodbye()
     print("Goodbye")
 end
 '''
-        skeleton: str = extract(code, "lua")
+        skeleton: str = extract_skeleton(code, "lua")
         self.assertIn("function greet(name)", skeleton)
         self.assertIn("function sayGoodbye()", skeleton)
         self.assertNotIn("local greeting", skeleton)
@@ -313,7 +315,7 @@ class Greeter {
     }
 }
 '''
-        skeleton: str = extract(code, "scala")
+        skeleton: str = extract_skeleton(code, "scala")
         self.assertIn("def greet(name: String): String =", skeleton)
         self.assertIn("def sayHello(): Unit =", skeleton)
         self.assertNotIn("val greeting", skeleton)
@@ -334,7 +336,7 @@ class Greeter {
     }
 }
 '''
-        skeleton: str = extract(code, "groovy")
+        skeleton: str = extract_skeleton(code, "groovy")
         self.assertIn("def greet(name)", skeleton)
         self.assertIn("def sayHello()", skeleton)
         self.assertNotIn("def greeting", skeleton)
@@ -353,7 +355,7 @@ class Greeter {
     NSLog(@"Message");
 }
 '''
-        skeleton: str = extract(code, "objc")
+        skeleton: str = extract_skeleton(code, "objc")
         self.assertIn("- (NSString *)greet:(NSString *)name", skeleton)
         self.assertIn("- (void)printMessage", skeleton)
         self.assertNotIn("NSString *greeting", skeleton)
@@ -386,7 +388,7 @@ class User {
     }
 }
 '''
-        skeleton: str = extract(code, "kotlin")
+        skeleton: str = extract_skeleton(code, "kotlin")
         self.assertIn("fun greet(name: String): String", skeleton)
         self.assertIn("fun validate()", skeleton)
         self.assertIn("fun getName(): String", skeleton)
@@ -405,7 +407,7 @@ class TestBinaryFileDetection(unittest.TestCase):
             f.flush()
             path = Path(f.name)
             try:
-                self.assertFalse(is_binary_file(path))
+                self.assertFalse(is_binary(str(path)))
             finally:
                 path.unlink()
 
@@ -418,7 +420,7 @@ class TestBinaryFileDetection(unittest.TestCase):
             f.flush()
             path = Path(f.name)
             try:
-                self.assertTrue(is_binary_file(path))
+                self.assertTrue(is_binary(str(path)))
             finally:
                 path.unlink()
 
@@ -430,7 +432,7 @@ class TestBinaryFileDetection(unittest.TestCase):
             f.flush()
             path = Path(f.name)
             try:
-                self.assertTrue(is_binary_file(path))
+                self.assertTrue(is_binary(str(path)))
             finally:
                 path.unlink()
 
@@ -441,7 +443,7 @@ class TestBinaryFileDetection(unittest.TestCase):
             f.flush()
             path = Path(f.name)
             try:
-                self.assertFalse(is_binary_file(path))
+                self.assertFalse(is_binary(str(path)))
             finally:
                 path.unlink()
 
@@ -451,7 +453,7 @@ class TestBinaryFileDetection(unittest.TestCase):
             f.flush()
             path = Path(f.name)
             try:
-                self.assertFalse(is_binary_file(path))
+                self.assertFalse(is_binary(str(path)))
             finally:
                 path.unlink()
 
@@ -469,106 +471,130 @@ class TestBinaryFileDetection(unittest.TestCase):
                 f.flush()
                 path = Path(f.name)
                 try:
-                    self.assertTrue(is_binary_file(path), f"{ext} should be detected as binary")
+                    self.assertTrue(is_binary(str(path)), f"{ext} should be detected as binary")
                 finally:
                     path.unlink()
 
 
-class TestConcatenation(unittest.TestCase):
-    """Test file concatenation functionality."""
+class TestFindFilesWithMixedTypes(unittest.TestCase):
+    """Test find_files returns all non-binary text files."""
 
-    def test_concatenate_single_file(self) -> None:
-        """Test concatenating a single file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            f.write("Hello, World!")
+    def test_find_files_includes_non_code_files(self) -> None:
+        """Test that find_files includes markdown, json, yaml, etc."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+
+            # Create various file types
+            (tmppath / "readme.md").write_text("# Test\n")
+            (tmppath / "config.json").write_text('{"key": "value"}\n')
+            (tmppath / "data.yaml").write_text("key: value\n")
+            (tmppath / "script.py").write_text("def hello():\n    pass\n")
+
+            # Find files
+            files = find_files([tmppath], recursive=False)
+            file_names = {f.name for f in files}
+
+            # All text files should be included
+            self.assertIn("readme.md", file_names)
+            self.assertIn("config.json", file_names)
+            self.assertIn("data.yaml", file_names)
+            self.assertIn("script.py", file_names)
+
+    def test_find_files_excludes_binary_files(self) -> None:
+        """Test that find_files excludes binary files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+
+            # Create text and binary files
+            (tmppath / "text.txt").write_text("text content\n")
+            (tmppath / "binary.bin").write_bytes(b"\x00\x01\x02\x03")
+
+            files = find_files([tmppath], recursive=False)
+            file_names = {f.name for f in files}
+
+            self.assertIn("text.txt", file_names)
+            self.assertNotIn("binary.bin", file_names)
+
+
+class TestMixedFileTypes(unittest.TestCase):
+    """Test mixed file type handling."""
+
+    def test_get_skeleton_on_unsupported_file_as_is(self) -> None:
+        """Test that unsupported files can't be extracted without language."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write('{"key": "value"}\n')
             f.flush()
-            path = f.name
+            path = Path(f.name)
 
             try:
-                result = concatenate_files([path], extract_skeletons=False)
-                self.assertIn(path, result)
-                self.assertIn("Hello, World!", result)
+                # Should raise ValueError for unsupported file type
+                with self.assertRaises(ValueError):
+                    get_skeleton(path)
             finally:
-                Path(path).unlink()
+                path.unlink()
 
-    def test_concatenate_multiple_files(self) -> None:
-        """Test concatenating multiple files."""
-        files = []
-        try:
-            # Create test files
-            for i, content in enumerate(["File 1 content", "File 2 content"]):
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".txt", delete=False
-                ) as f:
-                    f.write(content)
-                    f.flush()
-                    files.append(f.name)
 
-            result = concatenate_files(files, extract_skeletons=False)
+class TestExtractWithUnsupportedFiles(unittest.TestCase):
+    """Test extract command behavior with unsupported files."""
 
-            # Both files should be in result
-            self.assertIn("File 1 content", result)
-            self.assertIn("File 2 content", result)
-            # Should have headers for both
-            self.assertEqual(result.count("---"), 2)
-        finally:
-            for f in files:
-                Path(f).unlink()
+    def test_extract_requires_language_for_unsupported(self) -> None:
+        """Test that extract requires -l for unsupported file types."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("# Test\n")
+            f.flush()
+            path = Path(f.name)
 
-    def test_concatenate_skips_binary_files(self) -> None:
-        """Test that binary files are skipped during concatenation."""
-        files = []
-        try:
-            # Create a text file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-                f.write("Text content")
-                f.flush()
-                files.append(f.name)
+            try:
+                # Should raise ValueError for unsupported file type
+                with self.assertRaises(ValueError):
+                    get_skeleton(path)
+            finally:
+                path.unlink()
 
-            # Create a real binary file (with null bytes and PDF magic)
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False, mode="wb") as f:
-                # PDF magic bytes
-                f.write(b"%PDF-1.4\n")
-                # Add some binary content
-                f.write(b"\x00\x01\x02\x03\x04\x05")
-                f.write(b"Binary content")
-                f.flush()
-                files.append(f.name)
+    def test_extract_with_explicit_language(self) -> None:
+        """Test that extract works with explicit language for any file."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("def hello():\n    print('hi')\n")
+            f.flush()
+            path = Path(f.name)
 
-            result = concatenate_files(files, extract_skeletons=False)
+            try:
+                # With explicit language, should work
+                skeleton = extract_skeleton(path.read_text(), "python")
+                self.assertIn("def hello()", skeleton)
+                self.assertNotIn("print('hi')", skeleton)
+            finally:
+                path.unlink()
 
-            # Text file should be included
-            self.assertIn("Text content", result)
-            # Binary file should not be included
-            self.assertNotIn("Binary content", result)
-        finally:
-            for f in files:
-                Path(f).unlink()
 
-    def test_concatenate_with_skeleton_extraction(self) -> None:
-        """Test concatenation with skeleton extraction enabled."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(
-                """def hello(name):
-    \"\"\"Greet someone.\"\"\"
-    print(f"Hello {name}")
-    return True
-"""
+class TestIgnorePatternsWithMixedFiles(unittest.TestCase):
+    """Test ignore patterns work correctly with all file types."""
+
+    def test_default_ignore_patterns_apply(self) -> None:
+        """Test that default ignore patterns apply to all file types."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+
+            # Create node_modules with various files
+            node_modules = tmppath / "node_modules"
+            node_modules.mkdir()
+            (node_modules / "package.json").write_text("{}\n")
+            (node_modules / "module.js").write_text("module.exports = {};\n")
+
+            # Create regular files
+            (tmppath / "main.js").write_text("console.log('hi');\n")
+
+            files = find_files(
+                [tmppath],
+                recursive=True,
+                use_default_ignore=True,
             )
-            f.flush()
-            path = f.name
+            file_names = {f.name for f in files}
 
-            try:
-                result = concatenate_files([path], extract_skeletons=True)
-
-                # Function signature should be present
-                self.assertIn("def hello", result)
-                # Docstring should be present
-                self.assertIn("Greet someone", result)
-                # Body should be removed
-                self.assertNotIn('print(f"Hello {name}")', result)
-            finally:
-                Path(path).unlink()
+            # Files in node_modules should be excluded
+            self.assertIn("main.js", file_names)
+            self.assertNotIn("package.json", file_names)
+            self.assertNotIn("module.js", file_names)
 
 
 if __name__ == "__main__":
