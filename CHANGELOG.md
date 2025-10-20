@@ -1,6 +1,16 @@
 # CHANGELOG
 
+## v2.2.0 (2025-10-20)
+
+### Feature
+
+* feat: Add concatenate_files function ([`657519a`](https://github.com/undo76/loppers/commit/657519aac83a2c0486ca7fa20450a15496d41857))
+
 ## v2.1.0 (2025-10-17)
+
+### Chore
+
+* chore(release): 2.1.0 ([`fb62389`](https://github.com/undo76/loppers/commit/fb623895fc357243c4ba05782ff4e279958f4996))
 
 ### Feature
 
