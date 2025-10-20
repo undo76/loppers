@@ -1,6 +1,16 @@
 # CHANGELOG
 
+## v2.3.0 (2025-10-20)
+
+### Feature
+
+* feat: show sizes ([`ddc06f2`](https://github.com/undo76/loppers/commit/ddc06f2ac0ad884f1b99e7185f4abe809e698253))
+
 ## v2.2.0 (2025-10-20)
+
+### Chore
+
+* chore(release): 2.2.0 ([`6940bd8`](https://github.com/undo76/loppers/commit/6940bd8e9951b3459cadeb88b45603051780ba27))
 
 ### Feature
 

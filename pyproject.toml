@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 # Dynamic version updated by semantic-release
-version = "2.2.0"
+version = "2.3.0"
 
 [project]
 name = "loppers"
