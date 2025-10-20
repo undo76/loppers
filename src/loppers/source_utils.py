@@ -323,3 +323,73 @@ def get_tree(
         respect_gitignore=respect_gitignore,
     )
     return tree_as_str(files, collapse_single_dirs=collapse_single_dirs)
+
+
+def concatenate_files(
+    root: str | Path,
+    file_paths: Sequence[str | Path],
+    *,
+    extract: bool = True,
+    ignore_not_found: bool = False,
+) -> str:
+    """Concatenate files with optional skeleton extraction.
+
+    Args:
+        root: Root directory path (paths in file_paths are relative to this)
+        file_paths: List of file paths (relative to root) to concatenate
+        extract: Extract skeletons from code files (default True)
+        ignore_not_found: Ignore files that cannot be found or processed (default False)
+
+    Returns:
+        Concatenated content of all files with headers for each file
+
+    Raises:
+        FileNotFoundError: If a file is not found and ignore_not_found=False
+        ValueError: If no files could be processed and ignore_not_found=False
+        NotADirectoryError: If root is not a directory
+    """
+    root_path = Path(root)
+    if not root_path.exists():
+        raise FileNotFoundError(f"Root not found: {root_path}")
+    if not root_path.is_dir():
+        raise NotADirectoryError(f"Expected a directory at: {root_path}")
+
+    if not file_paths:
+        raise ValueError("No file paths provided")
+
+    results: list[str] = []
+    for relative_file_path in file_paths:
+        full_file_path = root_path / relative_file_path
+        try:
+            if not full_file_path.exists():
+                if not ignore_not_found:
+                    raise FileNotFoundError(f"File not found: {full_file_path}")
+                continue
+
+            if extract:
+                # Try to extract skeleton, fall back to original for unsupported types
+                try:
+                    content = get_skeleton(full_file_path, add_header=False)
+                except ValueError as e:
+                    # File type not supported for extraction, include as-is
+                    if "Unsupported file type" in str(e):
+                        content = full_file_path.read_text(encoding="utf-8")
+                    else:
+                        raise
+            else:
+                # Include original file content
+                content = full_file_path.read_text(encoding="utf-8")
+
+            # Add header with relative path
+            header = f"--- {relative_file_path}\n"
+            results.append(header + content + "\n")
+
+        except Exception as e:
+            if not ignore_not_found:
+                raise
+            # Skip files that cannot be processed when ignore_not_found=True
+
+    if not results:
+        raise ValueError("No files could be processed")
+
+    return "\n".join(results).rstrip()

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from loppers.extensions import EXTENSION_TO_LANGUAGE, get_language
 from loppers.source_utils import (
+    concatenate_files,
     extract_skeleton,
     find_files,
     get_skeleton,
@@ -19,6 +20,7 @@ __all__ = [
     "find_files",
     "get_tree",
     "extract_skeleton",
+    "concatenate_files",
     "EXTENSION_TO_LANGUAGE",
     "get_language",
 ]

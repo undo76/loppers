@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from loppers import extract_skeleton, find_files, get_skeleton
+from loppers import concatenate_files, extract_skeleton, find_files, get_skeleton
 from loppers.loppers import SkeletonExtractor
 from binaryornot.check import is_binary
 
@@ -592,6 +592,108 @@ class TestIgnorePatternsWithMixedFiles(unittest.TestCase):
             self.assertIn("main.js", files)
             self.assertNotIn("node_modules/package.json", files)
             self.assertNotIn("node_modules/module.js", files)
+
+
+class TestConcatenateFiles(unittest.TestCase):
+    """Test file concatenation."""
+
+    def test_concatenate_files_with_extraction(self) -> None:
+        """Test concatenating files with skeleton extraction."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+
+            # Create test files
+            py_file = root / "script.py"
+            py_file.write_text(
+                "def hello():\n"
+                '    """Say hello."""\n'
+                "    print('Hello')\n"
+            )
+
+            js_file = root / "app.js"
+            js_file.write_text(
+                "function greet() {\n"
+                "    console.log('Hi');\n"
+                "}\n"
+            )
+
+            # Concatenate with extraction
+            result = concatenate_files(root, ["script.py", "app.js"], extract=True)
+
+            # Check headers
+            self.assertIn("--- script.py", result)
+            self.assertIn("--- app.js", result)
+
+            # Check skeleton extraction (no body)
+            self.assertIn("def hello", result)
+            self.assertNotIn("print", result)
+            self.assertIn("function greet", result)
+            self.assertNotIn("console.log", result)
+
+    def test_concatenate_files_without_extraction(self) -> None:
+        """Test concatenating files without skeleton extraction."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+
+            py_file = root / "script.py"
+            py_file.write_text(
+                "def hello():\n"
+                "    print('Hello')\n"
+            )
+
+            # Concatenate without extraction
+            result = concatenate_files(root, ["script.py"], extract=False)
+
+            # Check full content is preserved
+            self.assertIn("print", result)
+            self.assertIn("def hello", result)
+
+    def test_concatenate_files_not_found_strict(self) -> None:
+        """Test error when file not found with ignore_not_found=False."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            with self.assertRaises(FileNotFoundError):
+                concatenate_files(root, ["missing.py"], ignore_not_found=False)
+
+    def test_concatenate_files_not_found_ignore(self) -> None:
+        """Test ignoring missing files with ignore_not_found=True."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+
+            # Create one valid file
+            py_file = root / "script.py"
+            py_file.write_text("def hello():\n    pass\n")
+
+            # Concatenate with missing file, ignoring not found
+            result = concatenate_files(
+                root, ["script.py", "missing.py"], ignore_not_found=True
+            )
+
+            # Should only include the found file
+            self.assertIn("--- script.py", result)
+            self.assertNotIn("missing.py", result)
+
+    def test_concatenate_empty_paths(self) -> None:
+        """Test error when no paths provided."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            with self.assertRaises(ValueError):
+                concatenate_files(root, [])
+
+    def test_concatenate_invalid_root(self) -> None:
+        """Test error when root does not exist."""
+        with self.assertRaises(FileNotFoundError):
+            concatenate_files("/nonexistent/path", ["file.py"])
+
+    def test_concatenate_root_not_directory(self) -> None:
+        """Test error when root is not a directory."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            file_path = root / "file.txt"
+            file_path.write_text("content")
+
+            with self.assertRaises(NotADirectoryError):
+                concatenate_files(file_path, ["file.py"])
 
 
 if __name__ == "__main__":

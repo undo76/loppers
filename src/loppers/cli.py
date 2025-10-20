@@ -7,7 +7,7 @@ import sys
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-from loppers import extract_skeleton, find_files, get_skeleton, get_tree
+from loppers import concatenate_files, extract_skeleton, find_files, get_skeleton, get_tree
 from loppers.extensions import get_language
 
 
@@ -144,46 +144,41 @@ def cmd_concatenate(args: argparse.Namespace) -> None:
         print("Warning: No files found", file=sys.stderr)
         sys.exit(1)
 
-    # Concatenate files with optional skeleton extraction
-    results: list[str] = []
-    for relative_file_path in files:
-        full_file_path = root_path / relative_file_path
-        try:
-            is_extracted = False
-            if args.no_extract:
-                # Include original file
-                content = full_file_path.read_text(encoding="utf-8")
-            else:
-                # Try to extract skeleton, fall back to original for unsupported types
-                try:
-                    content = get_skeleton(full_file_path, add_header=False)
-                    is_extracted = True
-                except ValueError as e:
-                    # File type not supported for extraction, include as-is
-                    if "Unsupported file type" in str(e):
-                        content = full_file_path.read_text(encoding="utf-8")
-                        is_extracted = False
-                    else:
-                        raise
-
-            # Add header with relative path
-            header = f"--- {relative_file_path}\n"
-            results.append(header + content + "\n")
-
-            if args.verbose:
+    # Log verbose information for each file
+    if args.verbose:
+        for relative_file_path in files:
+            full_file_path = root_path / relative_file_path
+            try:
                 if args.no_extract:
-                    print(f"ℹ Included {relative_file_path}", file=sys.stderr)
-                elif is_extracted:
-                    print(f"✓ Extracted skeleton from {relative_file_path}", file=sys.stderr)
+                    print(f"ℹ Included {relative_file_path}", file=sys.stderr)  # noqa: RUF001
                 else:
-                    print(f"ℹ Included {relative_file_path} (unsupported type, no extraction)",
-                          file=sys.stderr)
-        except Exception as e:
-            if args.verbose:
+                    # Check if file can be extracted
+                    try:
+                        get_skeleton(full_file_path, add_header=False)
+                        print(f"✓ Extracted skeleton from {relative_file_path}", file=sys.stderr)
+                    except ValueError as e:
+                        if "Unsupported file type" in str(e):
+                            msg = (
+                                f"ℹ Included {relative_file_path} "  # noqa: RUF001
+                                "(unsupported type, no extraction)"
+                            )
+                            print(msg, file=sys.stderr)
+                        else:
+                            print(f"⚠ Could not process {relative_file_path}: {e}", file=sys.stderr)
+            except Exception as e:
                 print(f"⚠ Could not process {relative_file_path}: {e}", file=sys.stderr)
-            continue
 
-    result = "\n".join(results).rstrip()
+    # Concatenate files using the new API
+    try:
+        result = concatenate_files(
+            root_path,
+            files,
+            extract=not args.no_extract,
+            ignore_not_found=True,  # Ignore any files that can't be processed
+        )
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # Output result
     if args.output:
@@ -335,7 +330,7 @@ Examples:
   loppers tree src/                              # Recursive tree
   loppers tree --no-recursive src/               # Non-recursive tree
   loppers tree -I "*.test.py" src/               # With custom ignore
-  loppers tree --collapse-single-dirs src/       # Collapse deep packages (e.g., main/java/com/example)
+  loppers tree --collapse-single-dirs src/       # Collapse deep packages
         """,
     )
     add_shared_args(tree_parser)

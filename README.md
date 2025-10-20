@@ -31,7 +31,7 @@ pip install loppers
 
 ## Python API
 
-The public API consists of 4 core functions:
+The public API consists of 5 core functions:
 
 ### 1. `extract_skeleton(source: str, language: str) -> str`
 
@@ -139,6 +139,57 @@ Output (with `collapse_single_dirs=True`):
 │  └─ Util.java
 └─ resources/config.yaml
 ```
+
+### 5. `concatenate_files(root: str | Path, file_paths: Sequence[str | Path], *, extract: bool = True, ignore_not_found: bool = False) -> str`
+
+Concatenate files with optional skeleton extraction. Useful when you already have a list of file paths that you want to combine.
+
+```python
+from loppers import concatenate_files, find_files
+
+# Get list of files to concatenate
+root = "src/"
+files = find_files(root)
+
+# Concatenate with skeleton extraction (default)
+result = concatenate_files(root, files)
+print(result)
+
+# Concatenate without extraction (include original content)
+result = concatenate_files(root, files, extract=False)
+
+# Ignore files that don't exist or can't be processed
+result = concatenate_files(root, files, ignore_not_found=True)
+```
+
+Output format:
+```
+--- path/to/file.py
+def calculate(x: int) -> int:
+    '''Calculate.'''
+
+--- path/to/other.js
+function process() {
+}
+```
+
+**Features:**
+- Files are concatenated with headers showing their relative paths
+- Each file separated by newlines
+- Automatically extracts skeletons from code files (unless `extract=False`)
+- Falls back to original content for unsupported file types
+- Can optionally ignore files that don't exist or can't be processed
+
+**Parameters:**
+- `root` - Root directory (file paths are relative to this)
+- `file_paths` - List of file paths (relative to root) to concatenate
+- `extract` - Extract skeletons from code files (default `True`)
+- `ignore_not_found` - Ignore files that cannot be found or processed (default `False`)
+
+**Raises:**
+- `FileNotFoundError` - If root doesn't exist or a file is not found (when `ignore_not_found=False`)
+- `ValueError` - If no file paths provided or no files could be processed
+- `NotADirectoryError` - If root is not a directory
 
 ### Utility Function
 
@@ -547,7 +598,7 @@ To add support for a new language:
 ```
 loppers/
 ├── src/loppers/
-│   ├── __init__.py              # Public API: extract_skeleton, get_skeleton, find_files, get_tree
+│   ├── __init__.py              # Public API: extract_skeleton, get_skeleton, find_files, get_tree, concatenate_files
 │   ├── loppers.py               # Core extraction logic with SkeletonExtractor class
 │   ├── source_utils.py          # Convenience API and file operations
 │   ├── extensions.py            # Language extension mapping
@@ -555,7 +606,7 @@ loppers/
 │   ├── mapping.py               # Backwards compatibility re-exports
 │   └── cli.py                   # Command-line interface (4 subcommands)
 ├── tests/
-│   └── test_loppers.py          # Unit tests (31 tests)
+│   └── test_loppers.py          # Unit tests (38 tests)
 ├── pyproject.toml               # Project configuration
 ├── README.md                    # This file
 └── CLAUDE.md                    # Development guide for Claude Code
