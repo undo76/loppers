@@ -6,9 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from binaryornot.check import is_binary
+
 from loppers import concatenate_files, extract_skeleton, find_files, get_skeleton
 from loppers.loppers import SkeletonExtractor
-from binaryornot.check import is_binary
 
 
 class TestSkeletonExtractor(unittest.TestCase):
@@ -694,6 +695,133 @@ class TestConcatenateFiles(unittest.TestCase):
 
             with self.assertRaises(NotADirectoryError):
                 concatenate_files(file_path, ["file.py"])
+
+
+class TestFileSizeFormatting(unittest.TestCase):
+    """Test file size formatting utility."""
+
+    def test_format_bytes(self):
+        """Test formatting of byte sizes."""
+        from loppers.source_utils import format_file_size
+
+        self.assertEqual(format_file_size(0), "0B")
+        self.assertEqual(format_file_size(100), "100B")
+        self.assertEqual(format_file_size(1023), "1023B")
+
+    def test_format_kilobytes(self):
+        """Test formatting of kilobyte sizes."""
+        from loppers.source_utils import format_file_size
+
+        self.assertEqual(format_file_size(1024), "1.0KB")
+        self.assertEqual(format_file_size(2048), "2.0KB")
+        self.assertEqual(format_file_size(1536), "1.5KB")  # 1.5KB
+
+    def test_format_megabytes(self):
+        """Test formatting of megabyte sizes."""
+        from loppers.source_utils import format_file_size
+
+        kb = 1024
+        mb = kb * 1024
+        self.assertEqual(format_file_size(mb), "1.0MB")
+        self.assertEqual(format_file_size(mb * 2), "2.0MB")
+        self.assertEqual(format_file_size(mb * 5 + kb * 300), "5.3MB")
+
+    def test_format_gigabytes(self):
+        """Test formatting of gigabyte sizes."""
+        from loppers.source_utils import format_file_size
+
+        kb = 1024
+        mb = kb * 1024
+        gb = mb * 1024
+        self.assertEqual(format_file_size(gb), "1.0GB")
+        self.assertEqual(format_file_size(gb * 2), "2.0GB")
+        self.assertEqual(format_file_size(gb + mb * 256), "1.2GB")
+
+
+class TestTreeWithSizes(unittest.TestCase):
+    """Test tree display with file sizes."""
+
+    def test_tree_as_str_with_sizes(self):
+        """Test tree_as_str with file sizes."""
+        from loppers.source_utils import tree_as_str
+
+        paths = ["file1.py", "dir1/file2.py", "dir1/file3.txt"]
+        file_sizes = {
+            "file1.py": 1024,
+            "dir1/file2.py": 2048,
+            "dir1/file3.txt": 512,
+        }
+        tree = tree_as_str(paths, file_sizes=file_sizes)
+        self.assertIn("file1.py  (1.0KB)", tree)
+        self.assertIn("file2.py  (2.0KB)", tree)
+        self.assertIn("file3.txt  (512B)", tree)
+
+    def test_tree_as_str_without_sizes(self):
+        """Test tree_as_str without file sizes."""
+        from loppers.source_utils import tree_as_str
+
+        paths = ["file1.py", "dir1/file2.py"]
+        tree = tree_as_str(paths, file_sizes=None)
+        self.assertIn("file1.py", tree)
+        self.assertIn("file2.py", tree)
+        # Should not have size info
+        self.assertNotIn("(", tree) or "." not in tree
+
+    def test_tree_as_str_with_collapse_and_sizes(self):
+        """Test tree_as_str with both collapse and sizes."""
+        from loppers.source_utils import tree_as_str
+
+        paths = ["main/java/com/example/Source.java"]
+        file_sizes = {"main/java/com/example/Source.java": 5120}
+        tree = tree_as_str(paths, collapse_single_dirs=True, file_sizes=file_sizes)
+        # Should collapse the nested path
+        self.assertIn("main/java/com/example", tree)
+        # Should show size
+        self.assertIn("(5.0KB)", tree)
+
+    def test_get_tree_with_show_sizes(self):
+        """Test get_tree API with show_sizes parameter."""
+        from loppers import get_tree
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            file1 = root / "file1.py"
+            file1.write_text("x" * 100)  # 100 bytes
+            file2 = root / "file2.txt"
+            file2.write_text("y" * 2048)  # 2048 bytes
+
+            # With sizes
+            tree_with_sizes = get_tree(root, show_sizes=True)
+            self.assertIn("file1.py", tree_with_sizes)
+            self.assertIn("file2.txt", tree_with_sizes)
+            self.assertIn("(100B)", tree_with_sizes)
+            self.assertIn("(2.0KB)", tree_with_sizes)
+
+            # Without sizes (default)
+            tree_no_sizes = get_tree(root, show_sizes=False)
+            self.assertIn("file1.py", tree_no_sizes)
+            self.assertNotIn("(100B)", tree_no_sizes)
+
+    def test_get_tree_with_sizes_and_collapse(self):
+        """Test get_tree with both show_sizes and collapse_single_dirs."""
+        from loppers import get_tree
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            deep_dir = root / "a" / "b" / "c"
+            deep_dir.mkdir(parents=True)
+            file = deep_dir / "file.py"
+            file.write_text("x" * 1024)
+
+            tree = get_tree(
+                root,
+                show_sizes=True,
+                collapse_single_dirs=True,
+            )
+            # Should collapse the path
+            self.assertIn("a/b/c", tree)
+            # Should show size
+            self.assertIn("(1.0KB)", tree)
 
 
 if __name__ == "__main__":

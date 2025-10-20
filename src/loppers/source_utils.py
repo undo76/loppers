@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -14,12 +15,40 @@ from loppers.loppers import SkeletonExtractor
 Tree = defaultdict[str, "Tree"]
 
 
-def tree_as_str(paths: list[str], *, collapse_single_dirs: bool = False) -> str:
+def format_file_size(size_bytes: int) -> str:
+    """Format file size in bytes to human-friendly format.
+
+    Args:
+        size_bytes: Size in bytes
+
+    Returns:
+        Formatted size string (e.g., "1.2KB", "5.0MB", "2.3GB")
+    """
+    if size_bytes < 1024:
+        return f"{size_bytes}B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f}KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f}MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.1f}GB"
+
+
+def tree_as_str(
+    paths: list[str],
+    *,
+    collapse_single_dirs: bool = False,
+    file_sizes: dict[str, int] | None = None,
+) -> str:
     """Return a formatted tree-like string representation of the given paths.
 
     Args:
         paths: List of file paths
         collapse_single_dirs: Collapse directories with single children (e.g., java/com/example)
+        file_sizes: Optional dict mapping file paths to their sizes in bytes
+
+    Returns:
+        Formatted tree string representation
     """
 
     def build_tree(paths: list[str]) -> Tree:
@@ -36,7 +65,7 @@ def tree_as_str(paths: list[str], *, collapse_single_dirs: bool = False) -> str:
                 node = node[part]
         return root
 
-    def render_tree(node: Tree, prefix: str = "") -> list[str]:
+    def render_tree(node: Tree, prefix: str = "", full_path: str = "") -> list[str]:
         """Recursively render the tree as a list of formatted lines."""
         lines: list[str] = []
         entries = sorted(node.keys(), key=lambda n: (not node[n], n.lower()))  # dirs first
@@ -46,11 +75,12 @@ def tree_as_str(paths: list[str], *, collapse_single_dirs: bool = False) -> str:
             # Collect collapsed path if enabled
             display_name = name
             current_node = node[name]
+            collapsed_path = f"{full_path}/{name}" if full_path else name
 
             if collapse_single_dirs:
                 # Keep collapsing while there's a single child that's a directory
                 while current_node and len(current_node) == 1:
-                    child_name = list(current_node.keys())[0]
+                    child_name = next(iter(current_node.keys()))
                     child_node = current_node[child_name]
 
                     if not child_node:
@@ -59,12 +89,18 @@ def tree_as_str(paths: list[str], *, collapse_single_dirs: bool = False) -> str:
 
                     # Child is a directory, collapse it into current path
                     display_name = f"{display_name}/{child_name}"
+                    collapsed_path = f"{collapsed_path}/{child_name}"
                     current_node = child_node
+
+            # Add file size if available
+            if file_sizes and collapsed_path in file_sizes:
+                size_str = format_file_size(file_sizes[collapsed_path])
+                display_name = f"{display_name}  ({size_str})"
 
             lines.append(f"{prefix}{connector}{display_name}")
             if current_node:
                 extension = "   " if i == len(entries) - 1 else "│  "
-                lines.extend(render_tree(current_node, prefix + extension))
+                lines.extend(render_tree(current_node, prefix + extension, collapsed_path))
         return lines
 
     tree = build_tree(paths)
@@ -297,6 +333,7 @@ def get_tree(
     use_default_ignore: bool = True,
     respect_gitignore: bool = True,
     collapse_single_dirs: bool = False,
+    show_sizes: bool = False,
 ) -> str:
     """Display formatted directory tree from a root directory.
 
@@ -307,6 +344,7 @@ def get_tree(
         use_default_ignore: Apply built-in ignore patterns (node_modules, .git, etc.)
         respect_gitignore: Respect .gitignore file in root when True
         collapse_single_dirs: Collapse directories with single children (default False)
+        show_sizes: Show file sizes in human-friendly format (default False)
 
     Returns:
         Formatted tree representation
@@ -315,6 +353,12 @@ def get_tree(
         FileNotFoundError: If root does not exist
         NotADirectoryError: If root is not a directory
     """
+    root_path = Path(root)
+    if not root_path.exists():
+        raise FileNotFoundError(f"Root not found: {root_path}")
+    if not root_path.is_dir():
+        raise NotADirectoryError(f"Expected a directory at: {root_path}")
+
     files = find_files(
         root,
         recursive=recursive,
@@ -322,7 +366,22 @@ def get_tree(
         use_default_ignore=use_default_ignore,
         respect_gitignore=respect_gitignore,
     )
-    return tree_as_str(files, collapse_single_dirs=collapse_single_dirs)
+
+    # Collect file sizes if requested
+    file_sizes = None
+    if show_sizes:
+        file_sizes = {}
+        for file_path in files:
+            full_path = root_path / file_path
+            if full_path.is_file():
+                with contextlib.suppress(OSError):
+                    file_sizes[file_path] = full_path.stat().st_size
+
+    return tree_as_str(
+        files,
+        collapse_single_dirs=collapse_single_dirs,
+        file_sizes=file_sizes,
+    )
 
 
 def concatenate_files(
@@ -384,7 +443,7 @@ def concatenate_files(
             header = f"--- {relative_file_path}\n"
             results.append(header + content + "\n")
 
-        except Exception as e:
+        except Exception:
             if not ignore_not_found:
                 raise
             # Skip files that cannot be processed when ignore_not_found=True

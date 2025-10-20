@@ -110,7 +110,7 @@ files = find_files(
 - Built-in patterns exclude node_modules, .git, __pycache__, build artifacts, etc.
 - Works with ALL non-binary text files (code, markdown, JSON, YAML, etc.)
 
-### 4. `get_tree(root: str | Path, *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True, collapse_single_dirs: bool = False) -> str`
+### 4. `get_tree(root: str | Path, *, recursive: bool = True, ignore_patterns: Sequence[str] | None = None, use_default_ignore: bool = True, respect_gitignore: bool = True, collapse_single_dirs: bool = False, show_sizes: bool = False) -> str`
 
 Display formatted directory tree from a root directory.
 
@@ -129,15 +129,21 @@ tree = get_tree("src/", ignore_patterns=["*.test.py"])
 
 # Collapse deep single-child directories (useful for Java packages)
 tree = get_tree("src/", collapse_single_dirs=True)
+
+# Show file sizes in human-friendly format
+tree = get_tree("src/", show_sizes=True)
+
+# Combine multiple options
+tree = get_tree("src/", collapse_single_dirs=True, show_sizes=True)
 ```
 
-Output (with `collapse_single_dirs=True`):
+Output (with `collapse_single_dirs=True` and `show_sizes=True`):
 ```
 .
 ├─ main/java/com/example
-│  ├─ Source.java
-│  └─ Util.java
-└─ resources/config.yaml
+│  ├─ Source.java  (2.3KB)
+│  └─ Util.java  (1.8KB)
+└─ resources/config.yaml  (512B)
 ```
 
 ### 5. `concatenate_files(root: str | Path, file_paths: Sequence[str | Path], *, extract: bool = True, ignore_not_found: bool = False) -> str`
@@ -302,6 +308,12 @@ loppers tree -I "*.test.py" src/
 
 # Collapse deep single-child directories (useful for Java packages)
 loppers tree --collapse-single-dirs src/
+
+# Show file sizes in human-friendly format
+loppers tree --show-sizes src/
+
+# Combine multiple options
+loppers tree --collapse-single-dirs --show-sizes src/
 ```
 
 **Options:**
@@ -312,6 +324,7 @@ loppers tree --collapse-single-dirs src/
 - `--no-gitignore` - Don't respect .gitignore
 - `--no-recursive` - Non-recursive tree
 - `--collapse-single-dirs` - Collapse directories with single children (e.g., `java/com/example` becomes one line)
+- `--show-sizes` - Show file sizes in human-friendly format (e.g., "1.2KB", "5.0MB")
 - `-v, --verbose` - Print status to stderr
 
 **Collapse Example:**

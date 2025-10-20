@@ -59,6 +59,12 @@ def add_shared_args(parser: argparse.ArgumentParser) -> None:
     )
 
     parser.add_argument(
+        "--show-sizes",
+        action="store_true",
+        help="Show file sizes in human-friendly format (KB, MB, GB)",
+    )
+
+    parser.add_argument(
         "-o",
         "--output",
         type=str,
@@ -102,8 +108,10 @@ def cmd_extract(args: argparse.Namespace) -> None:
         # Read from stdin
         source = sys.stdin.read()
         if not args.language:
-            print("Error: Language required when reading from stdin (use -l/--language)",
-                  file=sys.stderr)
+            print(
+                "Error: Language required when reading from stdin (use -l/--language)",
+                file=sys.stderr,
+            )
             sys.exit(1)
         language = args.language
 
@@ -199,6 +207,7 @@ def cmd_tree(args: argparse.Namespace) -> None:
             use_default_ignore=not args.no_default_ignore,
             respect_gitignore=not args.no_gitignore,
             collapse_single_dirs=args.collapse_single_dirs,
+            show_sizes=args.show_sizes,
         )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
