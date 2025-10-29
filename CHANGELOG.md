@@ -1,6 +1,16 @@
 # CHANGELOG
 
+## v2.4.0 (2025-10-29)
+
+### Feature
+
+* feat: Align tree representation to standard tree command. ([`5036d61`](https://github.com/undo76/loppers/commit/5036d61a5215a4656668039454492903b2cc22fb))
+
 ## v2.3.0 (2025-10-20)
+
+### Chore
+
+* chore(release): 2.3.0 ([`419b66d`](https://github.com/undo76/loppers/commit/419b66d345d008018c32a73261b7bc320cc6dffd))
 
 ### Feature
 
