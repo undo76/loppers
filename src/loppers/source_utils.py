@@ -70,7 +70,7 @@ def tree_as_str(
         lines: list[str] = []
         entries = sorted(node.keys(), key=lambda n: (not node[n], n.lower()))  # dirs first
         for i, name in enumerate(entries):
-            connector = "└─ " if i == len(entries) - 1 else "├─ "
+            connector = "└── " if i == len(entries) - 1 else "├── "
 
             # Collect collapsed path if enabled
             display_name = name
@@ -99,12 +99,12 @@ def tree_as_str(
 
             lines.append(f"{prefix}{connector}{display_name}")
             if current_node:
-                extension = "   " if i == len(entries) - 1 else "│  "
+                extension = "    " if i == len(entries) - 1 else "│   "
                 lines.extend(render_tree(current_node, prefix + extension, collapsed_path))
         return lines
 
     tree = build_tree(paths)
-    lines = [".", *render_tree(tree)]
+    lines = [*render_tree(tree)]
     return "\n".join(lines)
 
 
