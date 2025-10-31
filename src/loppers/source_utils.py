@@ -448,7 +448,7 @@ def concatenate_files(
                 raise
             # Skip files that cannot be processed when ignore_not_found=True
 
-    if not results:
+    if not results and not ignore_not_found:
         raise ValueError("No files could be processed")
 
     return "\n".join(results).rstrip()
